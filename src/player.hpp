@@ -10,8 +10,10 @@ struct PlayerSprites {
 };
 
 enum class AttackState {
-    Bow,
-    Sword,
+    BowAttack,
+    BowHold,
+    SwordAttack,
+    SwordHold,
     Fist = 0
 };
 
@@ -23,7 +25,7 @@ public:
         setScale({2.0, 2.0});
         setHitbox({0, 0, 32, 32});
 
-        state = AttackState::Fist;
+        
     }
 
     void update(sf::Time deltaTime) {
@@ -34,6 +36,27 @@ public:
             speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::A)),
             speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::S) - sf::Keyboard::isKeyPressed(sf::Keyboard::W))
         };
+
+        if (state == AttackState::Fist && sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)) {
+            state = AttackState::SwordHold;
+        } else if ((state == AttackState::SwordAttack || state == AttackState::SwordHold) && sf::Keyboard::isKeyPressed(sf::Keyboard::Num2)) {
+            state = AttackState::Fist;
+        }
+
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && state == AttackState::SwordHold) {
+            
+            state = AttackState::SwordAttack;
+        }
+
+        if (attackTimer.getElapsedTime().asSeconds() >= 0.8 && state == AttackState::SwordAttack) {
+            state = AttackState::SwordHold;
+            attackTimer.restart();
+        }
+
+        if (Game::getInstance()->getBoxes()[0]->getGlobalHitbox().intersects(getGlobalHitbox())) {
+            float push = 2;
+            push = std::min(std::max(push, 0.0f), 1.0f);
+        }
 
         move(velo);
 
@@ -66,4 +89,5 @@ private:
 
     PlayerAnimation anim;
     AttackState state;
+    sf::Clock attackTimer;
 };

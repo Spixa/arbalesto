@@ -23,12 +23,12 @@ Game* Game::instance_ = nullptr;
 
 Game* Game::getInstance() {
     if (!instance_)
-        return new Game();
-    else return instance_;
+        instance_ = new Game();
+    return instance_;
 }
 
 Game::Game()
-:   window_(sf::VideoMode(640, 480), "SFML Application", sf::Style::Close),
+:   window_(sf::VideoMode(1280, 720), "SFML Application", sf::Style::Close),
     general_font_(),
     statistics_text_()
 {
@@ -37,8 +37,8 @@ Game::Game()
     statistics_text_.setPosition(5.f, 5.f);
     statistics_text_.setCharacterSize(12);
 
-    boxes.push_back(new Box());
     p = new Player();
+    boxes.push_back(new Box());
 }
 
 void Game::run() {
@@ -86,7 +86,7 @@ void Game::updateStatistics(sf::Time elapsedTime) {
 }
 
 void Game::render() {
-    window_.clear();
+    window_.clear(sf::Color(200, 200, 200));
     window_.draw(statistics_text_);
 
     for (auto x: boxes) {

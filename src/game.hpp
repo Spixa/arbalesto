@@ -10,7 +10,7 @@ class Game : private sf::NonCopyable {
 public:
     void run();
     static Game* getInstance();
-    std::vector<Box*>& getBoxes() { return boxes; }
+    std::vector<Box*> getBoxes() { return boxes; }
 private:
     Game();
     ~Game();

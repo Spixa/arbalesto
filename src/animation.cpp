@@ -19,12 +19,23 @@ void PlayerAnimation::update(int row, sf::Time deltaTime, bool i, AttackState st
 {
     float dt = deltaTime.asSeconds();
 
-    if (state == AttackState::Fist) {
-        body.update(row, dt);
-        hand.update(row, dt);
-    } else {
-        body.update(2, dt);
-        hand.update(2, dt);
+    switch (state) {
+        case AttackState::Fist: {
+            body.update(row, dt);
+            hand.update(row, dt);
+        } break;
+        case AttackState::SwordHold: {
+            body.update(row, dt);
+            
+            if (row == 0)
+                hand.update(4, dt);
+            else
+                hand.update(2, dt);
+        } break;
+        case AttackState::SwordAttack: {
+            body.update(row, dt);
+            hand.update(3, dt);
+        }
     }
 
     feet.update(row, dt);
