@@ -3,14 +3,13 @@
 #include <SFML/Graphics.hpp>
 
 #include "resmanager.hpp"
-#include "box.hpp"
+#include "state_manager.hpp"
 
 class Player;
 class Game : private sf::NonCopyable {
 public:
     void run();
     static Game* getInstance();
-    std::vector<Box*> getBoxes() { return boxes; }
 private:
     Game();
     ~Game();
@@ -26,11 +25,10 @@ private:
     sf::RenderWindow window_;
 
 private: // Map
-    std::vector<Box*> boxes;
-    Player* p;
 
 private: // Text
     sf::Text statistics_text_;
     sf::Font general_font_;
+    StateManager state_man_;
 
 };

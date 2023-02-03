@@ -24,6 +24,9 @@ set(ARBALESTO_SRC
 	${CMAKE_SOURCE_DIR}/src/game.cpp
 	${CMAKE_SOURCE_DIR}/src/logger.cpp
 	${CMAKE_SOURCE_DIR}/src/animation.cpp
+	${CMAKE_SOURCE_DIR}/src/state.cpp
+	${CMAKE_SOURCE_DIR}/src/game_state.cpp
+	
 )
 
 link_directories(${SFML_LIB}/lib ${TINY_XML_LIB}/lib)

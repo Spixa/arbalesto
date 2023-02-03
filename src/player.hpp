@@ -53,11 +53,6 @@ public:
             attackTimer.restart();
         }
 
-        if (Game::getInstance()->getBoxes()[0]->getGlobalHitbox().intersects(getGlobalHitbox())) {
-            float push = 2;
-            push = std::min(std::max(push, 0.0f), 1.0f);
-        }
-
         move(velo);
 
         if (velo.x < 0) inv = true;

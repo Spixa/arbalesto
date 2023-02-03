@@ -4,7 +4,6 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include "player.hpp"
 
 template <typename T>
 std::string toString(const T& value)
@@ -30,15 +29,14 @@ Game* Game::getInstance() {
 Game::Game()
 :   window_(sf::VideoMode(1280, 720), "SFML Application", sf::Style::Close),
     general_font_(),
-    statistics_text_()
+    statistics_text_(),
+    state_man_()
 {
     general_font_.loadFromFile("../res/fonts/main.ttf");
     statistics_text_.setFont(general_font_);
     statistics_text_.setPosition(5.f, 5.f);
     statistics_text_.setCharacterSize(12);
 
-    p = new Player();
-    boxes.push_back(new Box());
 }
 
 void Game::run() {
@@ -73,7 +71,7 @@ void Game::processEvents()
 
 void Game::update(sf::Time elapsedTime) {
     updateStatistics(elapsedTime);
-    p->update(elapsedTime);
+    state_man_.update(elapsedTime);
 }
 
 void Game::updateStatistics(sf::Time elapsedTime) {
@@ -89,11 +87,7 @@ void Game::render() {
     window_.clear(sf::Color(200, 200, 200));
     window_.draw(statistics_text_);
 
-    for (auto x: boxes) {
-        window_.draw(*x);
-    }
-
-    window_.draw(*p);
+    state_man_.render(window_);
 
     window_.display();
 }

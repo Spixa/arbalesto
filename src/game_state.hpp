@@ -1,19 +1,13 @@
 #pragma once
 #include "state.hpp"
 
+class Player;
 class GameState : public State {
 public:
-    GameState() 
-        : State("game", States::GameState)
-    {
-
-    }
+    GameState();
 public:
-    void update(sf::Time deltaTime) override {
-
-    }
+    void update(sf::Time deltaTime) override;
 protected:
-    void draw(sf::RenderTarget& targ, sf::RenderStates states) const override {
-
-    }
+    void draw(sf::RenderTarget& targ, sf::RenderStates states) const override;
+    Player* p;
 };
