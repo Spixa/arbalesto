@@ -26,6 +26,8 @@ set(ARBALESTO_SRC
 	${CMAKE_SOURCE_DIR}/src/animation.cpp
 	${CMAKE_SOURCE_DIR}/src/state.cpp
 	${CMAKE_SOURCE_DIR}/src/game_state.cpp
+	${CMAKE_SOURCE_DIR}/src/menu_state.cpp
+	${CMAKE_SOURCE_DIR}/src/server/server.cpp
 	
 )
 
@@ -36,5 +38,6 @@ target_link_libraries(arbalesto
 					optimized sfml-system		debug sfml-system-d 
 					optimized sfml-window		debug sfml-window-d 
 					optimized sfml-graphics		debug sfml-graphics-d 
-					optimized sfml-audio		debug sfml-audio-d 
+					optimized sfml-audio		debug sfml-audio-d
+					optimized sfml-network		debug sfml-network-d 
 					optimized tinyxml2		debug tinyxml2d) 

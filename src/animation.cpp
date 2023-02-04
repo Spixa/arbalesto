@@ -10,8 +10,11 @@ PlayerAnimation::PlayerAnimation(float switchTime, Player* player) :
     hand.setCurrentImageX(0);
     this->player = player;
 
+    L("Applied BODY texture layer to animation of Player");
     player->getSprites().body->setTexture(body.getTexture());
+    L("Applied HAND texture layer to animation of Player");
     player->getSprites().hand->setTexture(hand.getTexture());
+    L("Applied FEET texture layer to animation of Player");
     player->getSprites().feet->setTexture(feet.getTexture());
 }
 

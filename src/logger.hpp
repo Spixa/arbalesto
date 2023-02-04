@@ -7,19 +7,19 @@ struct LogChannel {
     LogChannel(const std::string& name) : name(name) {}
 
     void trace(const std::string& content) {
-        std::cout << "T " << channel_prefix(name) << content << std::endl;
+        std::cout << "TRACE " << channel_prefix(name) << content << std::endl;
     }
 
     void info(const std::string& content) {
-        std::cout << "I " << channel_prefix(name) << content << std::endl;
+        std::cout << "INFO " << channel_prefix(name) << content << std::endl;
     }
 
     void warn(const std::string& content) {
-        std::cout << "W " << channel_prefix(name) << content << std::endl;
+        std::cout << "WARN " << channel_prefix(name) << content << std::endl;
     }
 
     void error(const std::string& content) {
-        std::cout << "E " << channel_prefix(name) << content << std::endl;
+        std::cout << "ERROR " << channel_prefix(name) << content << std::endl;
     }
 private:
     static std::string channel_prefix(const std::string& name) {

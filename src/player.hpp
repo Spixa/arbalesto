@@ -39,12 +39,13 @@ public:
 
         if (state == AttackState::Fist && sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)) {
             state = AttackState::SwordHold;
+            L("Player is now holding Sword");
         } else if ((state == AttackState::SwordAttack || state == AttackState::SwordHold) && sf::Keyboard::isKeyPressed(sf::Keyboard::Num2)) {
             state = AttackState::Fist;
+            L("Player is now holding FIST");
         }
 
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && state == AttackState::SwordHold) {
-            
             state = AttackState::SwordAttack;
         }
 

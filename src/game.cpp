@@ -21,8 +21,10 @@ Game* Game::instance_ = nullptr;
 
 
 Game* Game::getInstance() {
-    if (!instance_)
+    if (!instance_) {
+        L("Game::getInstance() called when game wasn't initalized, creating game");
         instance_ = new Game();
+    }
     return instance_;
 }
 
@@ -45,7 +47,6 @@ void Game::run() {
     try {
         while (window_.isOpen()) {
             sf::Time elapsedTime = clock.restart();
-
             processEvents();
             update(elapsedTime);
             render();

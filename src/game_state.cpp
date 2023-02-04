@@ -4,7 +4,7 @@
 
 GameState::GameState() : State("game", States::GameStateType), p(new Player())
 {
-
+    L("Loaded game state");
 }
 
 void GameState::update(sf::Time deltaTime) {

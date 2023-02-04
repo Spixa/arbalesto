@@ -1,4 +1,5 @@
 #pragma once
+#define L(x) log("main").trace(x)
 
 #include <SFML/Graphics.hpp>
 
