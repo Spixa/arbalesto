@@ -27,7 +27,7 @@ set(ARBALESTO_SRC
 	${CMAKE_SOURCE_DIR}/src/state.cpp
 	${CMAKE_SOURCE_DIR}/src/game_state.cpp
 	${CMAKE_SOURCE_DIR}/src/menu_state.cpp
-	${CMAKE_SOURCE_DIR}/src/server/server.cpp
+	${CMAKE_SOURCE_DIR}/src/server/servernetwork.cpp
 	
 )
 
