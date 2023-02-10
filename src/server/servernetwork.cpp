@@ -36,7 +36,6 @@ void Server::connectClients(std::vector<Client*> *clients) {
             msg << "Added client " << newClient->getRemoteAddress() << ":" << newClient->getRemotePort() << " on slot " << clients->size();
             sinfo(msg.str());
             
-            local.join(server::Player("hi" , {0,0}));
             sf::Packet join;
             join << net::Packet::PlayerJoinPacket;
 
@@ -84,6 +83,21 @@ void Server::receivePackets(Client* client, size_t iterator) {
     if (packet.getDataSize() > 0)
     {
         sinfo("Received new message from " + sock->getRemoteAddress().toString());
+
+        net::Packet receivedPacket;
+        packet >> receivedPacket;
+
+        switch (receivedPacket) {
+            case net::Packet::ClientNickPacket: {
+                std::string name;
+                packet >> name;
+
+                local.join(server::Player(name , {0,0}));
+            } break;
+            default: {
+                sinfo("Received an illegal packet from the client");
+            }
+        }
     }
 }
 

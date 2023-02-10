@@ -42,6 +42,10 @@ Game::Game()
 
     client.connect("localhost", 37549);
     client.run();
+
+    sf::Packet packet;
+    packet << net::Packet::ClientNickPacket << "Spixa";
+    client.sendPacket(packet);
 }
 
 void Game::run() {
