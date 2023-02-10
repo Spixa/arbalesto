@@ -26,7 +26,9 @@ public:
 
     }
 
-    void update();
+    void update() {
+        
+    }
 
     void setOnClickEvent(const std::function<void()>& f);
 };
