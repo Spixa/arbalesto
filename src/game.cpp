@@ -29,16 +29,18 @@ Game* Game::getInstance() {
 }
 
 Game::Game()
-:   window_(sf::VideoMode(1280, 720), "SFML Application", sf::Style::Close),
+:   window_(sf::VideoMode(1280, 720), "Arbalesto v1", sf::Style::Close),
     general_font_(),
     statistics_text_(),
-    state_man_()
+    state_man_(),
+    client()
 {
     general_font_.loadFromFile("../res/fonts/main.ttf");
     statistics_text_.setFont(general_font_);
     statistics_text_.setPosition(5.f, 5.f);
     statistics_text_.setCharacterSize(12);
 
+    client.connect("localhost", 37549);
 }
 
 void Game::run() {
@@ -65,6 +67,8 @@ void Game::processEvents()
 		{
             case sf::Event::Closed:
                 window_.close();
+                log("main").info("Goodbye!");
+                exit(0);
                 break;
 		}
 	}
@@ -78,14 +82,14 @@ void Game::update(sf::Time elapsedTime) {
 void Game::updateStatistics(sf::Time elapsedTime) {
     auto time = std::to_string(elapsedTime.asMilliseconds());
     if (time == "0") {
-        statistics_text_.setString("Arbalesto: Last update took less than a millisecond!");
+        statistics_text_.setString("Last update took less than a millisecond!\nCurrently not connected to any local or remote server");
     } else {
-        statistics_text_.setString("Last update took " + time + "ms");
+        statistics_text_.setString("Last update took " + time + "ms \nCurrently not connected to any local or remote server");
     }    
 }
 
 void Game::render() {
-    window_.clear(sf::Color(200, 200, 200));
+    window_.clear();
     window_.draw(statistics_text_);
 
     state_man_.render(window_);

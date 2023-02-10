@@ -5,6 +5,7 @@
 
 #include "resmanager.hpp"
 #include "state_manager.hpp"
+#include "client/clientnetwork.hpp"
 
 class Player;
 class Game : private sf::NonCopyable {
@@ -25,8 +26,8 @@ private:
     static Game* instance_;
     sf::RenderWindow window_;
 
-private: // Map
-
+private: // Client
+    ClientNetwork client;
 private: // Text
     sf::Text statistics_text_;
     sf::Font general_font_;

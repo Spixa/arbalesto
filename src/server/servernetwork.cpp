@@ -2,7 +2,7 @@
 #include <sstream>
 #include <thread>
 
-Server::Server(unsigned short port) : listenPort(port), version("0.1-beta")
+Server::Server(unsigned short port) : listenPort(port), version("0.1-beta"), local()
 {
     sinfo("Arbalesto server v" + version + " has begun");
     sinfo("Arbalesto server is based on openSIMP v1 schema");
@@ -10,6 +10,17 @@ Server::Server(unsigned short port) : listenPort(port), version("0.1-beta")
     if (listener.listen(listenPort) != sf::Socket::Done) {
         sinfo("Cannot listen on port " + std::to_string(listenPort));
     }
+}
+
+Server::~Server() {
+    sinfo("Stopping Arbalesto server...");
+
+    for (auto x : clients) {
+        x->socket()->disconnect();
+        delete(x);
+    }
+
+    clients.clear();
 }
 
 void Server::connectClients(std::vector<Client*> *clients) {
@@ -24,6 +35,7 @@ void Server::connectClients(std::vector<Client*> *clients) {
             std::stringstream msg{};
             msg << "Added client " << newClient->getRemoteAddress() << ":" << newClient->getRemotePort() << " on slot " << clients->size();
             sinfo(msg.str());
+            local.join(server::Player("hi" , {0,0}));
         } else {
             serror("Server listener error, restart the server");
             delete newClient;
@@ -76,6 +88,8 @@ void Server::managePackets()
         for (size_t iterator = 0; iterator < clients.size(); iterator++) {
             receivePackets(clients[iterator], iterator);
         }
+        
+        local.update();
         std::this_thread::sleep_for((std::chrono::milliseconds)25);
     }
 }

@@ -1,12 +1,21 @@
 #pragma once
 
-#include <vector>
+// sfml
 #include <SFML/Network.hpp>
+
+// std
+#include <vector>
 #include <string>
-#include "clients.hpp"
 #include <memory>
+
+// serverside inclusions
+#include "clients.hpp"
+#include "server.hpp"
+
+// logger
 #include "../logger.hpp"
 
+// logging macros
 #define strace(x) log("server").trace(x)
 #define sinfo(x) log("server").info(x)
 #define swarn(x) log("server").warn(x)
@@ -19,10 +28,12 @@ private:
     const std::string version;
 
     std::vector<Client*> clients;
+    LocalServer local;
 public:
     Server(unsigned short listenPort);
     Server(Server const&) = delete;
     Server& operator=(Server const&) = delete;
+    virtual ~Server();
 
     void run();
 public:

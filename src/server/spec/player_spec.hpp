@@ -1,6 +1,7 @@
 #pragma once
 
 #include <inttypes.h>
+#include <string>
 
 // Player specification for the Arbalesto Server
 // Player instances and their info are stored like this in the ram
@@ -8,18 +9,29 @@
 
 namespace server {
     struct PlayerAnimation {
-        enum class FeetAnimation: uint8_t {
+        enum class MovementState: uint8_t {
             RunningAnimation = 0,
             WalkingAnimation = 1,
             IdleAnimation = 2
-        };
-        enum class BodyAnimation: uint8_t {
-
-        };
+        } movement = MovementState::IdleAnimation;
+        enum class AttackState: uint8_t {
+            Fist = 0,
+            SwordAttack = 2,
+            SwordHold = 1,
+        } attack = AttackState::Fist;
     };
 
     struct Player {
+    public:
+        Player(std::string const& displayName, sf::Vector2f startingPos) 
+            : displayName(displayName), xPos(startingPos.x), yPos(startingPos.y),
+              animation()
+        {
+
+        }
+    public:
         float xPos, yPos;
+        std::string displayName;
         PlayerAnimation animation;
     };
 }
