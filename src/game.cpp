@@ -41,6 +41,7 @@ Game::Game()
     statistics_text_.setCharacterSize(12);
 
     client.connect("localhost", 37549);
+    client.run();
 }
 
 void Game::run() {

@@ -19,6 +19,13 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
     while (true) {
         if (sock->receive(lastReceivedPacket) == sf::Socket::Done) {
             cinfo("Received a packet");
+            
+            net::Packet p;
+            lastReceivedPacket >> p;
+            
+            if (p == net::Packet::PlayerJoinPacket) {
+                cinfo("Player joined");
+            }
         }
 
         std::this_thread::sleep_for((std::chrono::milliseconds)25);
@@ -34,5 +41,5 @@ void ClientNetwork::sendPacket(sf::Packet& packet) {
 
 void ClientNetwork::run()
 {
-    std::thread reception_thred(&ClientNetwork::receivePackets, this, &socket);
+    reception_thred = std::thread(&ClientNetwork::receivePackets, this, &socket);
 }

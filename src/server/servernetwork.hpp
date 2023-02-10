@@ -11,6 +11,7 @@
 // serverside inclusions
 #include "clients.hpp"
 #include "server.hpp"
+#include "../packets.hpp"
 
 // logger
 #include "../logger.hpp"

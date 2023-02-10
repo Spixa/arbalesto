@@ -35,7 +35,13 @@ void Server::connectClients(std::vector<Client*> *clients) {
             std::stringstream msg{};
             msg << "Added client " << newClient->getRemoteAddress() << ":" << newClient->getRemotePort() << " on slot " << clients->size();
             sinfo(msg.str());
+            
             local.join(server::Player("hi" , {0,0}));
+            sf::Packet join;
+            join << net::Packet::PlayerJoinPacket;
+
+            broadcastPacket(join, sf::IpAddress(), 0);
+
         } else {
             serror("Server listener error, restart the server");
             delete newClient;

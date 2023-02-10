@@ -6,7 +6,9 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <thread>
 
+#include "../packets.hpp"
 
 // logger
 #include "../logger.hpp"
@@ -21,6 +23,7 @@ class ClientNetwork {
     sf::TcpSocket socket;
     sf::Packet lastReceivedPacket;
     bool isConnected = false;
+    std::thread reception_thred;
 public:
     ClientNetwork();
 private:

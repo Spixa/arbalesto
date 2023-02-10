@@ -22,6 +22,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include ${SFML_LIB}/include)
 set(ARBALESTO_SRC
     ${CMAKE_SOURCE_DIR}/src/main.cpp
 	${CMAKE_SOURCE_DIR}/src/game.cpp
+	${CMAKE_SOURCE_DIR}/src/packets.cpp
 	${CMAKE_SOURCE_DIR}/src/logger.cpp
 	${CMAKE_SOURCE_DIR}/src/animation.cpp
 	${CMAKE_SOURCE_DIR}/src/state.cpp
