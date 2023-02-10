@@ -91,8 +91,12 @@ void Server::receivePackets(Client* client, size_t iterator) {
             case net::Packet::ClientNickPacket: {
                 std::string name;
                 packet >> name;
+                client->setName(name);
 
                 local.join(server::Player(name , {0,0}));
+            } break;
+            case net::Packet::PingPacket: {
+                sinfo(client->getName() + " pinged the server");
             } break;
             default: {
                 sinfo("Received an illegal packet from the client");

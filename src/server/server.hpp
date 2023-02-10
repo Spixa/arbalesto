@@ -22,6 +22,10 @@ public:
         players.push_back(player);
     }
 
+    void move() {
+
+    }
+
     void update() {
         
     }

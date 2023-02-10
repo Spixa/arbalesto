@@ -75,6 +75,14 @@ void Game::processEvents()
                 log("main").info("Goodbye!");
                 exit(0);
                 break;
+            case sf::Event::KeyPressed:
+                if (event.key.code == sf::Keyboard::Key::P) {
+                    sf::Packet packet;
+                    std::chrono::system_clock::time_point timeNow = std::chrono::system_clock::now();
+                    packet << net::Packet::PingPacket;
+                    client.sendPacket(packet);
+                }
+                break;
 		}
 	}
 }

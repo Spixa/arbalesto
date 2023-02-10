@@ -5,6 +5,7 @@
 class Client {
 private:
     sf::TcpSocket* sock;
+    std::string name;
 public:
     Client(sf::TcpSocket* sock) : sock(sock) {
 
@@ -14,5 +15,13 @@ public:
 
     sf::TcpSocket* socket() {
         return sock;
+    }
+
+    void setName(const std::string& name) {
+        this->name = name;
+    }
+
+    std::string getName() const {
+        return name;
     }
 };
