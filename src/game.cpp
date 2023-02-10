@@ -39,17 +39,17 @@ Game::Game()
     statistics_text_.setFont(general_font_);
     statistics_text_.setPosition(5.f, 5.f);
     statistics_text_.setCharacterSize(12);
+}
 
-    client.connect("localhost", 37549);
+void Game::run(std::string const& nickname, std::string const& ip, unsigned short port) {
+    sf::Clock clock{};
+
+    client.connect(ip, port);
     client.run();
 
     sf::Packet packet;
-    packet << net::Packet::ClientNickPacket << "Spixa";
+    packet << net::Packet::ClientNickPacket << nickname;
     client.sendPacket(packet);
-}
-
-void Game::run() {
-    sf::Clock clock{};
 
     try {
         while (window_.isOpen()) {

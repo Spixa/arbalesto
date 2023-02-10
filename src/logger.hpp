@@ -21,6 +21,13 @@ struct LogChannel {
     void error(const std::string& content) {
         std::cout << "ERROR " << channel_prefix(name) << content << std::endl;
     }
+
+    std::string prompt(const std::string& str) {
+        std::string result;
+        std::cout << "PROMPT " << channel_prefix(name) << " >> " << str << ": ";
+        std::getline(std::cin, result);
+        return result;
+    }
 private:
     static std::string channel_prefix(const std::string& name) {
         return "[" + name + "] ";

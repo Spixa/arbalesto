@@ -6,7 +6,6 @@ Server::Server(unsigned short port) : listenPort(port), version("0.1-beta"), loc
 {
     sinfo("Arbalesto server v" + version + " has begun");
     sinfo("Arbalesto server is based on openSIMP v1 schema");
-    swarn("Server is not intended to be used yet");
     if (listener.listen(listenPort) != sf::Socket::Done) {
         sinfo("Cannot listen on port " + std::to_string(listenPort));
     }

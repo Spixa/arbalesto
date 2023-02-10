@@ -10,7 +10,7 @@
 class Player;
 class Game : private sf::NonCopyable {
 public:
-    void run();
+    void run(std::string const& nickname, std::string const& ip, unsigned short port);
     static Game* getInstance();
 private:
     Game();
