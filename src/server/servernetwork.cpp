@@ -35,11 +35,7 @@ void Server::connectClients(std::vector<Client*> *clients) {
             std::stringstream msg{};
             msg << "Added client " << newClient->getRemoteAddress() << ":" << newClient->getRemotePort() << " on slot " << clients->size();
             sinfo(msg.str());
-            
-            sf::Packet join;
-            join << net::Packet::PlayerJoinPacket;
-
-            broadcastPacket(join, sf::IpAddress(), 0);
+        
 
         } else {
             serror("Server listener error, restart the server");
@@ -82,7 +78,7 @@ void Server::receivePackets(Client* client, size_t iterator) {
 
     if (packet.getDataSize() > 0)
     {
-        sinfo("Received new message from " + sock->getRemoteAddress().toString());
+        // sinfo("Received new message from " + sock->getRemoteAddress().toString());
 
         net::Packet receivedPacket;
         packet >> receivedPacket;
@@ -92,6 +88,11 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 std::string name;
                 packet >> name;
                 client->setName(name);
+
+                sf::Packet join;
+                join << net::Packet::PlayerJoinPacket << name;
+
+                broadcastPacket(join, sf::IpAddress(), 0);
 
                 local.join(server::Player(name , {0,0}));
             } break;

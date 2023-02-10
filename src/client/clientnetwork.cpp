@@ -9,6 +9,8 @@ ClientNetwork::ClientNetwork() {
 void ClientNetwork::connect(std::string const& ip, unsigned short port) {
     if (socket.connect(ip.c_str(), port) != sf::Socket::Done) {
         cerror("Could not connect to the server");
+        cerror("Exitting the application (bad server)");
+        exit(0);
     } else {
         isConnected = true;
         cinfo("Connected to " + ip + ":" + std::to_string(port));
@@ -24,7 +26,10 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
             lastReceivedPacket >> p;
             
             if (p == net::Packet::PlayerJoinPacket) {
-                cinfo("Player joined");
+                std::string name;
+                lastReceivedPacket >> name;
+
+                cinfo("'" + name + "' joined the server");
             }
         }
 
