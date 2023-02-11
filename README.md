@@ -18,3 +18,6 @@ The server/client interface uses the [openSIMP v1](https://github.com/spixa/open
 * Network support for movement and interactions and whatnot
 * Menu state with GUI
 * Collision boxes and physics
+
+## Collision detection and physics
+This is yet to be implemented in the game. But for now I just want to preface how I want it to be implemented. I think it would be the best option if collision detection is predicted clientside and made the player controlled by the client not collide with objects client side, but then also be corrected when it is calculated incorrectly by the client, on the serverside. This could also prevent cheaters from turning off collision on their client but being met by the server's collision correction. I would also like to make this feature togglable as an "Anticheat" measure that could be turned off  
