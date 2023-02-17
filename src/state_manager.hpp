@@ -1,8 +1,9 @@
 #pragma once
 #include "state.hpp"
-
 #include <memory>
 #include "game_state.hpp"
+
+class ClientNetwork;
 class StateManager {
 public:
     StateManager() {
@@ -12,9 +13,9 @@ public:
         selected_ = 0;
     }
 
-    void update(sf::Time deltaTime) {
+    void update(sf::Time deltaTime, ClientNetwork* client) {
         if (states_[selected_]) {
-            states_[selected_]->update(deltaTime);
+            states_[selected_]->update(deltaTime, client);
         }
     }
 

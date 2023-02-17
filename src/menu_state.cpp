@@ -6,7 +6,7 @@ MenuState::MenuState() : State("menu", States::MenuStateType)
 
 }
 
-void MenuState::update(sf::Time deltaTime) {
+void MenuState::update(sf::Time deltaTime, ClientNetwork* client) {
 
 }
 

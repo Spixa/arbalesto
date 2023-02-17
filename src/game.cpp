@@ -89,7 +89,7 @@ void Game::processEvents()
 
 void Game::update(sf::Time elapsedTime) {
     updateStatistics(elapsedTime);
-    state_man_.update(elapsedTime);
+    state_man_.update(elapsedTime, &client);
 }
 
 void Game::updateStatistics(sf::Time elapsedTime) {

@@ -32,7 +32,7 @@ public:
         float dt = deltaTime.asSeconds();
         constexpr float speed = 256.f;
 
-        sf::Vector2f velo = {
+        velo = {
             speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::A)),
             speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::S) - sf::Keyboard::isKeyPressed(sf::Keyboard::W))
         };
@@ -60,9 +60,17 @@ public:
         else if (velo.x > 0) inv = false;
         else {}
 
-        if (velo.x != 0 || velo.y != 0) anim.update(1, deltaTime, inv, state);
-        else anim.update(0, deltaTime, inv, state);
+        if (velo.x != 0 || velo.y != 0) { anim.update(1, deltaTime, inv, state); moving = true; }
+        else { anim.update(0, deltaTime, inv, state); moving = false; }
     
+    }
+
+    bool isMoving() const {
+        return moving;
+    }
+
+    sf::Vector2f const& getVelocity() const {
+        return velo;
     }
 
     PlayerSprites getSprites() {
@@ -81,7 +89,9 @@ private:
     sf::Sprite bodySprite;
     sf::Sprite handsSprite;
     sf::Sprite feetSprite;
+    sf::Vector2f velo;
     bool inv;
+    bool moving;
 
     PlayerAnimation anim;
     AttackState state;
