@@ -15,7 +15,7 @@ public:
 
     void update(sf::Time deltaTime, ClientNetwork* client) {
         if (states_[selected_]) {
-            states_[selected_]->update(deltaTime, client);
+            states_[selected_]->update(deltaTime, client, tickClock);
         }
     }
 
@@ -26,4 +26,6 @@ public:
 private:
     std::vector<State::Ptr> states_;
     size_t selected_;
+
+    sf::Clock tickClock{};
 };

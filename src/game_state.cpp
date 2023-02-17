@@ -7,12 +7,21 @@ GameState::GameState() : State("game", States::GameStateType), p(new Player())
     L("Loaded game state");
 }
 
-void GameState::update(sf::Time deltaTime, ClientNetwork* client) {
+void GameState::update(sf::Time deltaTime, ClientNetwork* client, sf::Clock& tickClock) {
     p->update(deltaTime);
 
-    // make timing a thing using global client-side tick mechanism
-    if (p->isMoving() ) {
-        auto velo = p->getVelocity();
+    if (p->isMoving() && tickClock.getElapsedTime().asMilliseconds() >= 50) {
+        auto velo = p->getPosition();
+        
+        // L("--");
+        // L("X: " + std::to_string(velo.x));
+        // L("Y: " + std::to_string(velo.y));
+
+        sf::Packet pos;
+        pos << net::Packet::ClientMovementPacket << velo.x << velo.y;
+        client->sendPacket(pos);
+
+        tickClock.restart();
     }
 }
 

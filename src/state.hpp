@@ -21,7 +21,7 @@ public:
     States getState() const { return type_; }
     std::string getName() const { return name_; }
 public:
-    virtual void update(sf::Time deltaTime, ClientNetwork* client) = 0;
+    virtual void update(sf::Time deltaTime, ClientNetwork* client, sf::Clock& tickClock) = 0;
 protected:
     virtual void draw(sf::RenderTarget&, sf::RenderStates) const override = 0;
 protected:

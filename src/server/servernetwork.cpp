@@ -77,7 +77,7 @@ void Server::receivePackets(Client* client, size_t iterator) {
 
     if (packet.getDataSize() > 0)
     {
-        // sinfo("Received new message from " + sock->getRemoteAddress().toString());
+        // debug("Received new message from " + sock->getRemoteAddress().toString());
 
         net::Packet receivedPacket;
         packet >> receivedPacket;
@@ -97,6 +97,14 @@ void Server::receivePackets(Client* client, size_t iterator) {
             } break;
             case net::Packet::PingPacket: {
                 sinfo(client->getName() + " pinged the server");
+            } break;
+            case net::Packet::ClientMovementPacket: {
+                float newX, newY;
+
+                packet >> newX >> newY;
+                client->setPosition({newX, newY});
+
+                sinfo("(! No anticheat !) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]");
             } break;
             default: {
                 sinfo("Received an illegal packet from the client");
