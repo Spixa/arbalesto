@@ -14,6 +14,7 @@ public:
     static Game* getInstance();
 
     StateManager* getStateManager() { return &state_man_; }
+    bool isFocused();
 private:
     Game();
     ~Game();
@@ -27,7 +28,7 @@ private:
 private:
     static Game* instance_;
     sf::RenderWindow window_;
-
+    bool focused = false;
 private: // Client
     ClientNetwork client;
 private: // Text

@@ -6,6 +6,7 @@
 GameState::GameState() : State("game", States::GameStateType), p(new Player())
 {
     L("Loaded game state");
+    p->setControlled(true);
 }
 
 void GameState::update(sf::Time deltaTime, ClientNetwork* client, sf::Clock& tickClock) {

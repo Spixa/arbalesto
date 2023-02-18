@@ -19,11 +19,6 @@
 #define cwarn(x) log("client").warn(x)
 #define cerror(x) log("client").error(x)
 
-enum class TeleportReason {
-    CommandTeleport = 0,
-    AnticheatTeleport = 1,
-};
-
 class ClientNetwork {
     sf::TcpSocket socket;
     sf::Packet lastReceivedPacket;

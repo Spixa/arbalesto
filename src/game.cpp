@@ -84,6 +84,12 @@ void Game::processEvents()
                     client.sendPacket(packet);
                 }
                 break;
+            case sf::Event::LostFocus:
+                focused = false;
+                break;
+            case sf::Event::GainedFocus:
+                focused = true;
+                break;
 		}
 	}
 }
@@ -91,6 +97,10 @@ void Game::processEvents()
 void Game::update(sf::Time elapsedTime) {
     updateStatistics(elapsedTime);
     state_man_.update(elapsedTime, &client);
+}
+
+bool Game::isFocused() {
+    return focused;
 }
 
 void Game::updateStatistics(sf::Time elapsedTime) {

@@ -28,32 +28,38 @@ public:
         
     }
 
+    bool isControlled() const { return controlled; }
+    void setControlled(bool tof) { controlled = tof; }
+
     void update(sf::Time deltaTime) {
         float dt = deltaTime.asSeconds();
 
         // Legit speed: 256.f
         constexpr float speed = 256 * 1.f;
 
-        velo = {
-            speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::A)),
-            speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::S) - sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-        };
+        if (controlled && Game::getInstance()->isFocused()) {
+            velo = {
+                speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::A)),
+                speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::S) - sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+            };
+            
 
-        if (state == AttackState::Fist && sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)) {
-            state = AttackState::SwordHold;
-            L("Player is now holding Sword");
-        } else if ((state == AttackState::SwordAttack || state == AttackState::SwordHold) && sf::Keyboard::isKeyPressed(sf::Keyboard::Num2)) {
-            state = AttackState::Fist;
-            L("Player is now holding FIST");
-        }
+            if (state == AttackState::Fist && sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)) {
+                state = AttackState::SwordHold;
+                L("Player is now holding Sword");
+            } else if ((state == AttackState::SwordAttack || state == AttackState::SwordHold) && sf::Keyboard::isKeyPressed(sf::Keyboard::Num2)) {
+                state = AttackState::Fist;
+                L("Player is now holding FIST");
+            }
 
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && state == AttackState::SwordHold) {
-            state = AttackState::SwordAttack;
-        }
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && state == AttackState::SwordHold) {
+                state = AttackState::SwordAttack;
+            }
 
-        if (attackTimer.getElapsedTime().asSeconds() >= 0.8 && state == AttackState::SwordAttack) {
-            state = AttackState::SwordHold;
-            attackTimer.restart();
+            if (attackTimer.getElapsedTime().asSeconds() >= 0.8 && state == AttackState::SwordAttack) {
+                state = AttackState::SwordHold;
+                attackTimer.restart();
+            }
         }
 
         move(velo);
@@ -94,6 +100,7 @@ private:
     sf::Vector2f velo;
     bool inv;
     bool moving;
+    bool controlled;
 
     PlayerAnimation anim;
     AttackState state;
