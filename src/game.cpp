@@ -96,17 +96,16 @@ void Game::update(sf::Time elapsedTime) {
 void Game::updateStatistics(sf::Time elapsedTime) {
     auto time = std::to_string(elapsedTime.asMilliseconds());
     if (time == "0") {
-        statistics_text_.setString("Last update took less than a millisecond!\nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))));
+        statistics_text_.setString("Last update took less than a millisecond!\nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))) + "\nTick speed: 20 T/s");
     } else {
-        statistics_text_.setString("Last update took " + time + "ms \nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))));
+        statistics_text_.setString("Last update took " + time + "ms \nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))) + "\nTick speed: 20 T/s");
     }    
 }
 
 void Game::render() {
     window_.clear();
-    window_.draw(statistics_text_);
 
     state_man_.render(window_);
-
+    window_.draw(statistics_text_);
     window_.display();
 }

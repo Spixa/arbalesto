@@ -108,10 +108,17 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 float dX = client->getPosition().x - newX;
                 float dY = client->getPosition().y - newY;
 
-                client->setPosition({newX, newY});
+                if (std::abs(dX) <=14.f && std::abs(dY) <=14.f) {
+                    client->setPosition({newX, newY});
+                    sinfo("(Velocity) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]"
+                    "(dX: " + std::to_string(int(std::floor(dX))) + ", dY: " + std::to_string(int(std::floor(dY))) + ")");
+                }
+                else {
+                    sinfo("(Velocity) CHEAT DETECTED >> " + client->getName() + " moved too far!"
+                    " . Exact: (dX: " + std::to_string(dX) + ", dY: " + std::to_string(dY) + ")");
+                    // tp player back
+                }
 
-                sinfo("(ANTICHEAT: LEGIT) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]"
-                "(ΔX: " + std::to_string(int(std::floor(dX))) + ", ΔY: " + std::to_string(int(std::floor(dY))) + ")");
             } break;
             default: {
                 sinfo("Received an illegal packet from the client");
