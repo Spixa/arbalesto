@@ -14,6 +14,10 @@ namespace net {
         PingPacket = 4, 
     };
 
+    enum class TeleportReason: sf::Uint8 {
+        CommandTeleport = 0,
+        AnticheatTeleport = 1,
+    };
 
     // https://en.sfml-dev.org/forums/index.php?topic=17075.0
     template<typename T>

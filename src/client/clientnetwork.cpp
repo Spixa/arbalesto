@@ -33,15 +33,31 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
             } else
             if (p == net::Packet::TeleportPlayerPacket) {
                 float newX, newY;
-                lastReceivedPacket >> newX >> newY;
+                net::TeleportReason tpReason;
+
+                lastReceivedPacket >> newX >> newY >> tpReason;
 
                 Game::getInstance()
                     ->getStateManager()
                     ->getGameState()
                     ->getPlayer()
                     ->setPosition(newX, newY);
+
+                std::string tpReasonStr;
+
+                switch (tpReason) {
+                    case net::TeleportReason::AnticheatTeleport: {
+                        tpReasonStr = "Anticheat";
+                    } break;
+                    case net::TeleportReason::CommandTeleport: {
+                        tpReasonStr = "Server command";
+                    } break;
+                    default: {
+                        tpReasonStr  ="Automatic Server Teleportation";
+                    } break;
+                }
                 
-                cinfo("Client's player was teleported to new location [" + std::to_string(newX) + ", " + std::to_string(newY) + "]");
+                cinfo("Client's player was teleported to new location [" + std::to_string(newX) + ", " + std::to_string(newY) + "] because of \"" + tpReasonStr + "\"");
             }
         }
 

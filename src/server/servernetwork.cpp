@@ -3,6 +3,9 @@
 #include <cmath>
 #include <thread>
 
+// spec
+
+
 Server::Server(unsigned short port) : listenPort(port), version("0.1-beta"), local()
 {
     sinfo("Arbalesto server v" + version + " has begun");
@@ -118,7 +121,7 @@ void Server::receivePackets(Client* client, size_t iterator) {
                     "(edX: " + std::to_string(dX) + ", edY: " + std::to_string(dY) + ")");
                     
                     sf::Packet tpBackPacket;
-                    tpBackPacket << net::Packet::TeleportPlayerPacket << client->getPosition().x << client->getPosition().y;
+                    tpBackPacket << net::Packet::TeleportPlayerPacket << client->getPosition().x << client->getPosition().y << net::TeleportReason::AnticheatTeleport;
 
                     client->socket()->send(tpBackPacket);
                 }
