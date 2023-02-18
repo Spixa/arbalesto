@@ -19,13 +19,18 @@ enum class AttackState {
 
 class Player : public HitboxSprite {
 public:
-    Player()
-        : anim(0.1, this)
+    Player(std::string const& displayName = "", sf::Vector2f const& startingPos = {0.f, 0.f})
+        : anim(0.1, this), displayName(displayName)
     {
-        setScale({2.0, 2.0});
+        setPosition(startingPos);
         setHitbox({0, 0, 32, 32});
 
         
+        displayNameFont.loadFromFile("../res/fonts/main.ttf");
+        displayNameText.setFont(displayNameFont);
+        displayNameText.setCharacterSize(12.f);
+        displayNameText.setString(displayName);
+        displayNameText.setPosition(0.f, -15.f);
     }
 
     bool isControlled() const { return controlled; }
@@ -92,6 +97,7 @@ protected:
         target.draw(feetSprite, states);
         target.draw(bodySprite, states);
         target.draw(handsSprite, states);
+        target.draw(displayNameText, states);
     }
 private:
     sf::Sprite bodySprite;
@@ -101,8 +107,14 @@ private:
     bool inv;
     bool moving;
     bool controlled;
+    std::string displayName;
 
     PlayerAnimation anim;
     AttackState state;
     sf::Clock attackTimer;
+
+private:
+    sf::Font displayNameFont;
+    sf::Text displayNameText;
 };
+

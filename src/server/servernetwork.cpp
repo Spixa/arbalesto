@@ -82,8 +82,6 @@ void Server::receivePackets(Client* client, size_t iterator) {
 
     if (packet.getDataSize() > 0)
     {
-        // debug("Received new message from " + sock->getRemoteAddress().toString());
-
         net::Packet receivedPacket;
         packet >> receivedPacket;
 
@@ -92,11 +90,12 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 std::string name;
                 packet >> name;
                 client->setName(name);
+                sf::Vector2f startingPosition = {0.f, 0.f};
 
                 sf::Packet join;
-                join << net::Packet::PlayerJoinPacket << name;
+                join << net::Packet::PlayerJoinPacket << name << startingPosition.x << startingPosition.y;
 
-                broadcastPacket(join, sf::IpAddress(), 0);
+                broadcastPacket(join, client->socket()->getRemoteAddress(), client->socket()->getRemotePort());
 
                 local.join(server::Player(name , {0,0}));
             } break;

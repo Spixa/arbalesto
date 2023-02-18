@@ -55,7 +55,7 @@ void Game::run(std::string const& nickname, std::string const& ip, unsigned shor
     try {
         while (window_.isOpen()) {
             sf::Time elapsedTime = clock.restart();
-            processEvents();
+            processEvents(elapsedTime);
             update(elapsedTime);
             render();
         }
@@ -64,7 +64,34 @@ void Game::run(std::string const& nickname, std::string const& ip, unsigned shor
     }
 }
 
-void Game::processEvents()
+#ifdef __unix__
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
+
+void process_mem_usage(double& vm_usage, double& resident_set)
+{
+    vm_usage     = 0.0;
+    resident_set = 0.0;
+
+    // the two fields we want
+    unsigned long vsize;
+    long rss;
+    {
+        std::string ignore;
+        std::ifstream ifs("/proc/self/stat", std::ios_base::in);
+        ifs >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> vsize >> rss;
+    }
+
+    long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+    vm_usage = vsize / 1024.0;
+    resident_set = rss * page_size_kb;
+}
+#endif
+
+void Game::processEvents(sf::Time elapsedTime)
 {
 	sf::Event event;
 	while (window_.pollEvent(event))
@@ -72,8 +99,19 @@ void Game::processEvents()
 		switch (event.type)
 		{
             case sf::Event::Closed:
-                window_.close();
                 log("main").info("Goodbye!");
+                log("launcher").info("--- <Summary> ---");
+                log("launcher").info("Final FPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))));
+                log("launcher").info("Discarded packets: " + std::to_string(failedPacketCounter));
+                #ifdef __unix__
+                    double vm, rss;
+                    process_mem_usage(vm, rss);
+                    log("launcher").info("<Memory> (Unix-only)");
+                    log("launcher").info("\tVM: " + std::to_string(vm) + " RSS: " + std::to_string(rss));
+                    log("launcher").info("</Memory>");
+                #endif
+                log("launcher").info("--- </Summary> ---");
+                window_.close();
                 exit(0);
                 break;
             case sf::Event::KeyPressed:

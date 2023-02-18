@@ -27,9 +27,14 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
             
             if (p == net::Packet::PlayerJoinPacket) {
                 std::string name;
-                lastReceivedPacket >> name;
+                float sX = 0.f, sY = 0.f;
+                lastReceivedPacket >> name >> sX >> sY;
 
-                cinfo("'" + name + "' joined the server");
+                cinfo("'" + name + "' joined the server at [" + std::to_string(sX) + ", " + std::to_string(sY) + "]");
+                Game::getInstance()
+                    ->getStateManager()
+                    ->getGameState()
+                    ->addPlayer(name, sf::Vector2f(sX, sY));
             } else
             if (p == net::Packet::TeleportPlayerPacket) {
                 float newX, newY;
@@ -69,6 +74,7 @@ void ClientNetwork::sendPacket(sf::Packet& packet) {
     if (packet.getDataSize() > 0 && socket.send(packet) != sf::Socket::Done)
     {
         cinfo("Could not send packet");
+        Game::getInstance()->failedPacketCounter++;
     }
 }
 

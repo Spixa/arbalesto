@@ -15,11 +15,13 @@ public:
 
     StateManager* getStateManager() { return &state_man_; }
     bool isFocused();
+
+    unsigned int failedPacketCounter = 0;
 private:
     Game();
     ~Game();
 private:
-    void processEvents();
+    void processEvents(sf::Time elapsedTime);
     void update(sf::Time elapsedTime);
     void render();
     void updateStatistics(sf::Time elapsedTime);
