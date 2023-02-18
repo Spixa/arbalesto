@@ -12,6 +12,8 @@ class Game : private sf::NonCopyable {
 public:
     void run(std::string const& nickname, std::string const& ip, unsigned short port);
     static Game* getInstance();
+
+    StateManager* getStateManager() { return &state_man_; }
 private:
     Game();
     ~Game();

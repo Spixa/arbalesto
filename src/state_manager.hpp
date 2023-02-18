@@ -23,6 +23,11 @@ public:
         if (states_[selected_])
             window.draw(*states_[selected_].get());
     }
+
+    std::shared_ptr<GameState> getGameState() {
+        // downcast to GameState
+        return std::dynamic_pointer_cast<GameState>(states_[0]);
+    }
 private:
     std::vector<State::Ptr> states_;
     size_t selected_;

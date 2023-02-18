@@ -6,7 +6,6 @@
 GameState::GameState() : State("game", States::GameStateType), p(new Player())
 {
     L("Loaded game state");
-    std::this_thread::sleep_for((std::chrono::milliseconds) 250);
 }
 
 void GameState::update(sf::Time deltaTime, ClientNetwork* client, sf::Clock& tickClock) {

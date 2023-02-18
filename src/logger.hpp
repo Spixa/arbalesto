@@ -7,7 +7,9 @@ struct LogChannel {
     LogChannel(const std::string& name) : name(name) {}
 
     void trace(const std::string& content) {
-        std::cout << "TRACE " << channel_prefix(name) << content << std::endl;
+        #ifndef NDEBUG
+            std::cout << "DEBUG " << channel_prefix(name) << content << std::endl;
+        #endif
     }
 
     void info(const std::string& content) {

@@ -4,7 +4,7 @@ project(Arbalesto VERSION 1 LANGUAGES C CXX)
 
 # Default build
 if(NOT CMAKE_BUILD_TYPE)
- set(CMAKE_BUILD_TYPE "Release")
+ set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
@@ -43,4 +43,4 @@ target_link_libraries(arbalesto
 					optimized sfml-graphics		debug sfml-graphics-d 
 					optimized sfml-audio		debug sfml-audio-d
 					optimized sfml-network		debug sfml-network-d 
-					optimized tinyxml2		debug tinyxml2d) 
+) 

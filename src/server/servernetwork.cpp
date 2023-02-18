@@ -110,13 +110,17 @@ void Server::receivePackets(Client* client, size_t iterator) {
 
                 if (std::abs(dX) <=14.f && std::abs(dY) <=14.f) {
                     client->setPosition({newX, newY});
-                    sinfo("(Velocity) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]"
+                    strace("(Velocity) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]"
                     "(dX: " + std::to_string(int(std::floor(dX))) + ", dY: " + std::to_string(int(std::floor(dY))) + ")");
                 }
                 else {
-                    sinfo("(Velocity) CHEAT DETECTED >> " + client->getName() + " moved too far!"
-                    " . Exact: (dX: " + std::to_string(dX) + ", dY: " + std::to_string(dY) + ")");
-                    // tp player back
+                    strace("(Velocity) " + client->getName() + " moved too far!"
+                    "(edX: " + std::to_string(dX) + ", edY: " + std::to_string(dY) + ")");
+                    
+                    sf::Packet tpBackPacket;
+                    tpBackPacket << net::Packet::TeleportPlayerPacket << client->getPosition().x << client->getPosition().y;
+
+                    client->socket()->send(tpBackPacket);
                 }
 
             } break;

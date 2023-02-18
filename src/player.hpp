@@ -30,7 +30,9 @@ public:
 
     void update(sf::Time deltaTime) {
         float dt = deltaTime.asSeconds();
-        constexpr float speed = 256.f;
+
+        // Legit speed: 256.f
+        constexpr float speed = 256 * 1.f;
 
         velo = {
             speed * dt * (sf::Keyboard::isKeyPressed(sf::Keyboard::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::A)),

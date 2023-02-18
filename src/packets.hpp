@@ -10,6 +10,7 @@ namespace net {
         PlayerLeavePacket = 1,
         ClientMovementPacket = 2,
         ClientNickPacket = 3,
+        TeleportPlayerPacket = 4,
         PingPacket = 4, 
     };
 

@@ -1,6 +1,8 @@
 #include "clientnetwork.hpp"
 #include <thread>
 #include <chrono>
+#include "../game.hpp"
+#include "../player.hpp"
 
 ClientNetwork::ClientNetwork() {
     cinfo("Client has initialized");
@@ -20,8 +22,6 @@ void ClientNetwork::connect(std::string const& ip, unsigned short port) {
 void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
     while (true) {
         if (sock->receive(lastReceivedPacket) == sf::Socket::Done) {
-            cinfo("Received a packet");
-            
             net::Packet p;
             lastReceivedPacket >> p;
             
@@ -30,6 +30,18 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
                 lastReceivedPacket >> name;
 
                 cinfo("'" + name + "' joined the server");
+            } else
+            if (p == net::Packet::TeleportPlayerPacket) {
+                float newX, newY;
+                lastReceivedPacket >> newX >> newY;
+
+                Game::getInstance()
+                    ->getStateManager()
+                    ->getGameState()
+                    ->getPlayer()
+                    ->setPosition(newX, newY);
+                
+                cinfo("Client's player was teleported to new location [" + std::to_string(newX) + ", " + std::to_string(newY) + "]");
             }
         }
 
