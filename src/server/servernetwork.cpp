@@ -1,5 +1,6 @@
 #include "servernetwork.hpp"
 #include <sstream>
+#include <cmath>
 #include <thread>
 
 Server::Server(unsigned short port) : listenPort(port), version("0.1-beta"), local()
@@ -34,7 +35,8 @@ void Server::connectClients(std::vector<Client*> *clients) {
             std::stringstream msg{};
             msg << "Added client " << newClient->getRemoteAddress() << ":" << newClient->getRemotePort() << " on slot " << clients->size();
             sinfo(msg.str());
-        
+
+            strace("connectClients(): Posted task");
 
         } else {
             serror("Server listener error, restart the server");
@@ -102,9 +104,14 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 float newX, newY;
 
                 packet >> newX >> newY;
+
+                float dX = client->getPosition().x - newX;
+                float dY = client->getPosition().y - newY;
+
                 client->setPosition({newX, newY});
 
-                sinfo("(! No anticheat !) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]");
+                sinfo("(ANTICHEAT: LEGIT) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]"
+                "(ΔX: " + std::to_string(int(std::floor(dX))) + ", ΔY: " + std::to_string(int(std::floor(dY))) + ")");
             } break;
             default: {
                 sinfo("Received an illegal packet from the client");
@@ -128,7 +135,9 @@ void Server::managePackets()
 
 void Server::run() 
 {
+    sinfo("(@connection) Thread launched");
     std::thread connectionThr{&Server::connectClients, this, &clients};
 
+    sinfo("(@reception) Thread launched");
     managePackets();
 }

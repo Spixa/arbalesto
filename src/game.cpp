@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <cmath>
 
 template <typename T>
 std::string toString(const T& value)
@@ -95,9 +96,9 @@ void Game::update(sf::Time elapsedTime) {
 void Game::updateStatistics(sf::Time elapsedTime) {
     auto time = std::to_string(elapsedTime.asMilliseconds());
     if (time == "0") {
-        statistics_text_.setString("Last update took less than a millisecond!\nCurrently not connected to any local or remote server");
+        statistics_text_.setString("Last update took less than a millisecond!\nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))));
     } else {
-        statistics_text_.setString("Last update took " + time + "ms \nCurrently not connected to any local or remote server");
+        statistics_text_.setString("Last update took " + time + "ms \nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))));
     }    
 }
 
