@@ -4,7 +4,7 @@ project(Arbalesto VERSION 1 LANGUAGES C CXX)
 
 # Default build
 if(NOT CMAKE_BUILD_TYPE)
- set(CMAKE_BUILD_TYPE "Debug")
+ set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)

@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main() {
-    std::string ans = log("launcher").prompt("Host a dedicated server or join a remote server or just host a server? (D/R/S)");
+    std::string ans = log("launcher").prompt("[Host a debug server/client] or [Join a remote server] or just [Host a server?] (D/R/S)");
 
     char res = tolower(ans[0]);
 

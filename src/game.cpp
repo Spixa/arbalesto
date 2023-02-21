@@ -144,9 +144,9 @@ bool Game::isFocused() {
 void Game::updateStatistics(sf::Time elapsedTime) {
     auto time = std::to_string(elapsedTime.asMilliseconds());
     if (time == "0") {
-        statistics_text_.setString("Last update took less than a millisecond!\nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))) + "\nTick speed: 20 T/s");
+        statistics_text_.setString("Last update took less than a millisecond!\nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))) + "\nTick speed (times update() is called each second): 20 T/s");
     } else {
-        statistics_text_.setString("Last update took " + time + "ms \nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))) + "\nTick speed: 20 T/s");
+        statistics_text_.setString("Last update took " + time + "ms \nFPS: " + std::to_string(int(std::floor(1.f/elapsedTime.asSeconds()))) + "\nTick speed (times update() is called each second): 20 T/s");
     }    
 }
 
