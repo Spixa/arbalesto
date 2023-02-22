@@ -90,6 +90,9 @@ public:
         return { &bodySprite, &handsSprite, &feetSprite};
     }
     
+    std::string const& getDisplayName() const {
+        return displayName;
+    }
 protected:
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
         states.transform *= getTransform();

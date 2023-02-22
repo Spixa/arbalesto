@@ -11,7 +11,8 @@ namespace net {
         ClientMovementPacket = 2,
         ClientNickPacket = 3,
         TeleportPlayerPacket = 4,
-        PingPacket = 4, 
+        PingPacket = 4,
+        UpdatePositionPacket = 5,
     };
 
     enum class TeleportReason: sf::Uint8 {

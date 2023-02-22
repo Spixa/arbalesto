@@ -116,14 +116,19 @@ void Server::receivePackets(Client* client, size_t iterator) {
                     "(dX: " + std::to_string(int(std::floor(dX))) + ", dY: " + std::to_string(int(std::floor(dY))) + ")");
                 }
                 else {
-                    strace("(Velocity) " + client->getName() + " moved too far!"
+                    strace("(Velocity) " + client->getName() + " moved too far! "
                     "(edX: " + std::to_string(dX) + ", edY: " + std::to_string(dY) + ")");
                     
                     sf::Packet tpBackPacket;
-                    tpBackPacket << net::Packet::TeleportPlayerPacket << client->getPosition().x << client->getPosition().y << net::TeleportReason::AnticheatTeleport;
+                    tpBackPacket << net::Packet::TeleportPlayerPacket << dX << dY << net::TeleportReason::AnticheatTeleport;
 
                     client->socket()->send(tpBackPacket);
                 }
+
+                sf::Packet updatePosition;
+                updatePosition << net::Packet::UpdatePositionPacket << client->getName() << newX << newY;
+                
+                broadcastPacket(updatePosition, client->socket()->getRemoteAddress(), client->socket()->getRemotePort());
 
             } break;
             default: {

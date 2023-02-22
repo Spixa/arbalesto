@@ -37,16 +37,16 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
                     ->addPlayer(name, sf::Vector2f(sX, sY));
             } else
             if (p == net::Packet::TeleportPlayerPacket) {
-                float newX, newY;
+                float dX, dY;
                 net::TeleportReason tpReason;
 
-                lastReceivedPacket >> newX >> newY >> tpReason;
+                lastReceivedPacket >> dX >> dY >> tpReason;
 
                 Game::getInstance()
                     ->getStateManager()
                     ->getGameState()
                     ->getPlayer()
-                    ->setPosition(newX, newY);
+                    ->move(dX, dY);
 
                 std::string tpReasonStr;
 
@@ -62,7 +62,25 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
                     } break;
                 }
                 
-                cinfo("Client's player was teleported to new location [" + std::to_string(newX) + ", " + std::to_string(newY) + "] because of \"" + tpReasonStr + "\"");
+                auto pos = Game::getInstance()->getStateManager()->getGameState()->getPlayer()->getPosition();
+                cinfo("Client's player was teleported to new location [" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + "] because of \"" + tpReasonStr + "\"");
+            } else
+            if (p == net::Packet::UpdatePositionPacket) {
+                float newX, newY;
+                std::string name;
+                
+                lastReceivedPacket >> name >> newX >> newY;
+
+                for (auto x : *Game::getInstance()
+                    ->getStateManager()
+                    ->getGameState()
+                    ->getPlayers())
+                {
+                    if (x->getDisplayName() == name) {
+                        x->setPosition(newX, newY);
+                    }
+                }
+
             }
         }
 

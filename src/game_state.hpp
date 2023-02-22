@@ -7,6 +7,7 @@ public:
     GameState();
 
     Player* getPlayer() { return p; }
+    std::vector<Player*>* getPlayers() { return &players; }
 
     void addPlayer(std::string const& name, sf::Vector2f const& startingPosition);
 public:

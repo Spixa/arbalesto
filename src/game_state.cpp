@@ -17,7 +17,7 @@ void GameState::update(sf::Time deltaTime, ClientNetwork* client, sf::Clock& tic
         x->update(deltaTime);
     }
 
-    if (p->isMoving() && tickClock.getElapsedTime().asMilliseconds() >= 50) {
+    if (p->isMoving() && tickClock.getElapsedTime().asMilliseconds() >= 25) {
         auto velo = p->getPosition();
 
         sf::Packet pos;
