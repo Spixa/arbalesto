@@ -95,6 +95,18 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 sf::Packet join;
                 join << net::Packet::PlayerJoinPacket << name << startingPosition.x << startingPosition.y;
 
+                sf::Packet players;
+                players << net::Packet::UpdatePlayerListPacket << int(clients.size());
+
+                for (auto x : clients) {
+                    if (x->getName() != client->getName())
+                        players << x->getName();
+                        players << x->getPosition().x << x->getPosition().y;
+                }
+
+                client->socket()->send(players);
+
+
                 broadcastPacket(join, client->socket()->getRemoteAddress(), client->socket()->getRemotePort());
 
                 local.join(server::Player(name , {0,0}));
@@ -147,7 +159,7 @@ void Server::managePackets()
         }
         
         local.update();
-        std::this_thread::sleep_for((std::chrono::milliseconds)25);
+        std::this_thread::sleep_for((std::chrono::milliseconds)1);
     }
 }
 

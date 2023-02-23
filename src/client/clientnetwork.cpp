@@ -81,10 +81,26 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
                     }
                 }
 
+            } else
+            if (p == net::Packet::UpdatePlayerListPacket) {
+                int count;
+                lastReceivedPacket >> count;
+
+                for (int i = 0; i < count; i++) {
+                    std::string name;
+                    float x, y;
+
+                    lastReceivedPacket >> name >> x >> y;
+
+                    Game::getInstance()
+                    ->getStateManager()
+                    ->getGameState()
+                    ->addPlayer(name, sf::Vector2f(x, y));
+                }
             }
         }
 
-        std::this_thread::sleep_for((std::chrono::milliseconds)25);
+        std::this_thread::sleep_for((std::chrono::milliseconds)1);
     }
 }
 
