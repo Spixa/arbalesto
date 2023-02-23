@@ -11,13 +11,23 @@ namespace net {
         ClientMovementPacket = 2,
         ClientNickPacket = 3,
         TeleportPlayerPacket = 4,
-        PingPacket = 4,
-        UpdatePositionPacket = 5,
+        PingPacket = 5,
+        UpdatePositionPacket = 6,
+        UpdatePlayerListPacket = 7,
+        KickClientPacket = 8,
+        ServerBroadcastPacket = 9,
+        WelcomePacket = 10,
     };
 
     enum class TeleportReason: sf::Uint8 {
         CommandTeleport = 0,
         AnticheatTeleport = 1,
+    };
+
+    enum class KickReason: sf::Uint8 {
+        UsernameTakenKick = 0,
+        BadUsernameKick = 1,
+        AnticheatKick = 2
     };
 
     // https://en.sfml-dev.org/forums/index.php?topic=17075.0

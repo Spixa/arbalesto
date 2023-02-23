@@ -3,6 +3,7 @@
 #include <cmath>
 #include <thread>
 
+
 // spec
 
 
@@ -49,7 +50,7 @@ void Server::connectClients(std::vector<Client*> *clients) {
     }
 }
 
-void Server::broadcastPacket(sf::Packet& packet, sf::IpAddress excludeAddr, unsigned short excludePort) {
+void Server::broadcastPacket(sf::Packet& packet, sf::IpAddress excludeAddr = {}, unsigned short excludePort = 0) {
     for (size_t iterator = 0; iterator < clients.size(); iterator++) {
         sf::TcpSocket* socket = clients[iterator]->socket();
 
@@ -89,11 +90,66 @@ void Server::receivePackets(Client* client, size_t iterator) {
             case net::Packet::ClientNickPacket: {
                 std::string name;
                 packet >> name;
+
+                if (!std::regex_match(name, alphanum) && name.length() <= 16) {
+                    sf::Packet kickPacket;
+                    kickPacket << net::Packet::KickClientPacket << net::KickReason::BadUsernameKick;
+                    client->socket()->send(kickPacket);
+                    disconnectClient(client, iterator);
+
+                    sf::Packet announceKick;
+                    announceKick << net::Packet::ServerBroadcastPacket;
+                    std::string kickMessage = "\"" + name + "\" was kicked from the server for non-alphanumeric or a long username";
+                    announceKick << kickMessage; 
+
+                    broadcastPacket(announceKick);
+                    return;
+                }
+
+                for (auto x : clients) {
+                    if (x->getName() == name) {
+                        sf::Packet kickPacket;
+                        kickPacket << net::Packet::KickClientPacket << net::KickReason::UsernameTakenKick;
+                        client->socket()->send(kickPacket);
+                        disconnectClient(client, iterator);
+
+                        // TOOD: move block to kickClient(Client, ...) 
+                        sf::Packet announceKick;
+                        announceKick << net::Packet::ServerBroadcastPacket;
+                        std::string kickMessage = "\"" + name + "\" was kicked from the server for having a taken username";
+                        announceKick << kickMessage; 
+
+                        broadcastPacket(announceKick);
+                        return;
+                    }
+                }
+
+
+                sf::Packet welcomePacket;
+                welcomePacket << net::Packet::WelcomePacket << welcomeMsg;
+
+                client->socket()->send(welcomePacket);
+
                 client->setName(name);
-                sf::Vector2f startingPosition = {0.f, 0.f};
+                sf::Vector2f startingPosition = {500.f, 500.f};
 
                 sf::Packet join;
                 join << net::Packet::PlayerJoinPacket << name << startingPosition.x << startingPosition.y;
+
+                sf::Packet players;
+                std::vector<Client*> plClients = clients;
+                plClients.erase(plClients.begin() + iterator);
+
+                players << net::Packet::UpdatePlayerListPacket << int(plClients.size());
+                strace("Player count: " + std::to_string(int(plClients.size())));
+
+                for (auto x : plClients) {
+                    players << x->getName();
+                    players << x->getPosition().x << x->getPosition().y;
+                }
+
+                client->socket()->send(players);
+
 
                 broadcastPacket(join, client->socket()->getRemoteAddress(), client->socket()->getRemotePort());
 
@@ -147,7 +203,7 @@ void Server::managePackets()
         }
         
         local.update();
-        std::this_thread::sleep_for((std::chrono::milliseconds)25);
+        std::this_thread::sleep_for((std::chrono::milliseconds)1);
     }
 }
 

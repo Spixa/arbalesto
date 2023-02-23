@@ -34,7 +34,15 @@ public:
     }
 
     bool isControlled() const { return controlled; }
-    void setControlled(bool tof) { controlled = tof; }
+    void setControlled(bool tof) { 
+        controlled = tof; 
+    
+        if (controlled) {
+            displayNameText.setFillColor(sf::Color::Green);
+        } else {
+            displayNameText.setFillColor(sf::Color::White);
+        }
+    }
 
     void update(sf::Time deltaTime) {
         float dt = deltaTime.asSeconds();
@@ -92,6 +100,12 @@ public:
     
     std::string const& getDisplayName() const {
         return displayName;
+    }
+
+
+    void setDisplayName(std::string const& name) {
+        displayName = name;
+        displayNameText.setString(displayName);
     }
 protected:
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override {

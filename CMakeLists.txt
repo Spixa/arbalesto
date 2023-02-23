@@ -20,6 +20,7 @@ set(SFML_LIB ${INSTALL_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include ${SFML_LIB}/include)
 
 set(ARBALESTO_SRC
+	${CMAKE_SOURCE_DIR}/src/utils.cpp
     ${CMAKE_SOURCE_DIR}/src/main.cpp
 	${CMAKE_SOURCE_DIR}/src/game.cpp
 	${CMAKE_SOURCE_DIR}/src/packets.cpp
@@ -28,7 +29,6 @@ set(ARBALESTO_SRC
 	${CMAKE_SOURCE_DIR}/src/state.cpp
 	${CMAKE_SOURCE_DIR}/src/game_state.cpp
 	${CMAKE_SOURCE_DIR}/src/menu_state.cpp
-	${CMAKE_SOURCE_DIR}/src/utils.cpp
 	${CMAKE_SOURCE_DIR}/src/server/servernetwork.cpp
 	${CMAKE_SOURCE_DIR}/src/client/clientnetwork.cpp
 	

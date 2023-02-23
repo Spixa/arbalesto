@@ -8,3 +8,12 @@ std::string toString(const T& value)
     stream << value;
     return stream.str();
 }
+
+template<class T>
+std::string Fmt::formatNumber(T value)
+{
+    std::stringstream ss;
+    ss.imbue(std::locale(""));
+    ss << std::fixed << value;
+    return ss.str();
+}

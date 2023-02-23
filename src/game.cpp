@@ -1,10 +1,13 @@
 #include "game.hpp"
+#include "utils.hpp"
 
 #include <exception>
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <cmath>
+
+#include "player.hpp"
 
 template <typename T>
 std::string toString(const T& value)
@@ -44,6 +47,8 @@ Game::Game()
 
 void Game::run(std::string const& nickname, std::string const& ip, unsigned short port) {
     sf::Clock clock{};
+
+    state_man_.getGameState()->getPlayer()->setDisplayName(nickname);
 
     client.connect(ip, port);
     client.run();
@@ -105,10 +110,10 @@ void Game::processEvents(sf::Time elapsedTime)
                 log("launcher").info("Discarded packets: " + std::to_string(failedPacketCounter));
                 #ifdef __unix__
                     double vm, rss;
-                    process_mem_usage(vm, rss);
-                    log("launcher").info("<Memory> (Unix-only)");
-                    log("launcher").info("\tVM: " + std::to_string(vm) + " RSS: " + std::to_string(rss));
-                    log("launcher").info("</Memory>");
+                    // process_mem_usage(vm, rss);
+                    // log("launcher").info("<Memory> (Unix-only)");
+                    // log("launcher").info("\tVM: " + Fmt::formatNumber(int(vm)) + " RSS: " + Fmt::formatNumber(int(rss)));
+                    // log("launcher").info("</Memory>");
                 #endif
                 log("launcher").info("--- </Summary> ---");
                 window_.close();

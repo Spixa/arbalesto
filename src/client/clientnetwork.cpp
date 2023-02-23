@@ -81,10 +81,67 @@ void ClientNetwork::receivePackets(sf::TcpSocket* sock) {
                     }
                 }
 
+            } else
+            if (p == net::Packet::UpdatePlayerListPacket) {
+                int count;
+                lastReceivedPacket >> count;
+
+                ctrace("Player count before join: " + std::to_string(count));
+
+                for (int i = 0; i < count; i++) {
+                    std::string name;
+                    float x, y;
+
+                    lastReceivedPacket >> name >> x >> y;
+
+                    Game::getInstance()
+                    ->getStateManager()
+                    ->getGameState()
+                    ->addPlayer(name, sf::Vector2f(x, y));
+
+                    ctrace("Added player with name \"" + name + "\" at [" + std::to_string(x) + ", " + std::to_string(y) + "]");
+                }
+            } else
+            if (p == net::Packet::KickClientPacket) {
+                net::KickReason reason;
+                std::string reasonStr;
+
+                lastReceivedPacket >> reason;
+
+                switch (reason) {
+                    case net::KickReason::UsernameTakenKick: {
+                        reasonStr = "username being taken";
+                    } break;
+                    case net::KickReason::BadUsernameKick: {
+                        reasonStr = "bad username";
+                    } break;
+                    case net::KickReason::AnticheatKick: {
+                        reasonStr = "cheating";
+                    } break;
+                    default: {
+                        reasonStr = "no reason";
+                    } break;
+                }
+
+                cinfo("Client was kicked out of the server for " + reasonStr);
+                exit(0);
+            } else
+            if (p == net::Packet::ServerBroadcastPacket) {
+                std::string content;
+                lastReceivedPacket >> content;
+
+                cinfo("Broadcast: " + content);
+            } else 
+            if (p == net::Packet::WelcomePacket) {
+                std::string welcome;
+                lastReceivedPacket >> welcome;
+
+                cinfo("Server welcomes you: ");
+                std::cout << welcome;
             }
         }
 
-        std::this_thread::sleep_for((std::chrono::milliseconds)25);
+        std::this_thread::sleep_for((std::chrono::milliseconds)1);
     }
 }
 

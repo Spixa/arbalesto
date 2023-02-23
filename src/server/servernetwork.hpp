@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <regex>
 
 // serverside inclusions
 #include "clients.hpp"
@@ -22,6 +23,16 @@
 #define swarn(x) log("server").warn(x)
 #define serror(x) log("server").error(x)
 
+#ifdef NDEBUG
+    #define RELEASE_MODE "RELEASE"
+#else
+    #define RELEASE_MODE "DEBUG"
+#endif
+
+#define BUI 3
+#define VER 1 
+
+
 class Server {
 private:
     unsigned short listenPort;
@@ -30,6 +41,14 @@ private:
 
     std::vector<Client*> clients;
     LocalServer local;
+
+    std::string welcomeMsg =    "------------------[Welcome]-------------------\n"
+                                "| Welcome to another Arbalesto v1 server      |\n"
+                                "| Please enjoy your stay                      |\n"
+                                "| Written in C++ and using SFML               |\n"
+                                "------------------[Welcome]-------------------\n"
+                                "Server is arbalesto-server_v" + std::to_string(VER) + "-bui" + std::to_string(BUI) + "_" + std::string(RELEASE_MODE) + "\n";
+    std::regex alphanum{"^[a-zA-Z0-9_]*$"};
 public:
     Server(unsigned short listenPort);
     Server(Server const&) = delete;
