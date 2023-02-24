@@ -101,7 +101,6 @@ void Server::receivePackets(Client* client, size_t iterator) {
                     announceKick << net::Packet::ServerBroadcastPacket;
                     std::string kickMessage = "\"" + name + "\" was kicked from the server for non-alphanumeric or a long username";
                     announceKick << kickMessage; 
-
                     broadcastPacket(announceKick);
                     return;
                 }
@@ -130,26 +129,22 @@ void Server::receivePackets(Client* client, size_t iterator) {
 
                 client->socket()->send(welcomePacket);
 
+                sf::Packet updatePlList;
+                updatePlList << net::Packet::UpdatePlayerListPacket;
+                std::vector<Client*> plClients = clients;
+                plClients.erase(plClients.begin() + iterator);
+
+                for (auto x : plClients) {
+                    updatePlList << x->getName() << x->getPosition().x << x->getPosition().y;
+                }
+                client->socket()->send(updatePlList);
+
+
                 client->setName(name);
                 sf::Vector2f startingPosition = {500.f, 500.f};
 
                 sf::Packet join;
                 join << net::Packet::PlayerJoinPacket << name << startingPosition.x << startingPosition.y;
-
-                sf::Packet players;
-                std::vector<Client*> plClients = clients;
-                plClients.erase(plClients.begin() + iterator);
-
-                players << net::Packet::UpdatePlayerListPacket << int(plClients.size());
-                strace("Player count: " + std::to_string(int(plClients.size())));
-
-                for (auto x : plClients) {
-                    players << x->getName();
-                    players << x->getPosition().x << x->getPosition().y;
-                }
-
-                client->socket()->send(players);
-
 
                 broadcastPacket(join, client->socket()->getRemoteAddress(), client->socket()->getRemotePort());
 
