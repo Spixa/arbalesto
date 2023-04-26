@@ -12,6 +12,7 @@ GameState::GameState() : State("game", States::GameStateType), p(new Player("Pla
 
 void GameState::update(sf::Time deltaTime, ClientNetwork* client, sf::Clock& tickClock) {
     p->update(deltaTime);
+    world.update(deltaTime);
 
     for (auto x: players) {
         x->update(deltaTime);
@@ -30,7 +31,7 @@ void GameState::update(sf::Time deltaTime, ClientNetwork* client, sf::Clock& tic
 
 void GameState::draw(sf::RenderTarget& targ, sf::RenderStates states) const {
     states.transform *= getTransform();
-
+    targ.draw(world, states);
     targ.draw(*p, states);
 
     for (auto x: players) {

@@ -17,6 +17,7 @@ namespace net {
         KickClientPacket = 8,
         ServerBroadcastPacket = 9,
         WelcomePacket = 10,
+        UpdateAnimationPacket = 11,
     };
 
     enum class TeleportReason: sf::Uint8 {

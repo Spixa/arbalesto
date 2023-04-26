@@ -134,6 +134,8 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 std::vector<Client*> plClients = clients;
                 plClients.erase(plClients.begin() + iterator);
 
+                updatePlList << int(plClients.size());
+
                 for (auto x : plClients) {
                     updatePlList << x->getName() << x->getPosition().x << x->getPosition().y;
                 }
@@ -163,11 +165,11 @@ void Server::receivePackets(Client* client, size_t iterator) {
 
                 if (std::abs(dX) <=14.f && std::abs(dY) <=14.f) {
                     client->setPosition({newX, newY});
-                    strace("(Velocity) " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]"
+                    strace("> " + client->getName() + " moved to [" + std::to_string(newX) + ", " + std::to_string(newY) + "]"
                     "(dX: " + std::to_string(int(std::floor(dX))) + ", dY: " + std::to_string(int(std::floor(dY))) + ")");
                 }
                 else {
-                    strace("(Velocity) " + client->getName() + " moved too far! "
+                    strace("> " + client->getName() + " moved too far! "
                     "(edX: " + std::to_string(dX) + ", edY: " + std::to_string(dY) + ")");
                     
                     sf::Packet tpBackPacket;
@@ -181,6 +183,9 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 
                 broadcastPacket(updatePosition, client->socket()->getRemoteAddress(), client->socket()->getRemotePort());
 
+            } break;
+            case net::Packet::UpdateAnimationPacket: {
+                
             } break;
             default: {
                 sinfo("Received an illegal packet from the client");

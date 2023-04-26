@@ -18,6 +18,39 @@ PlayerAnimation::PlayerAnimation(float switchTime, Player* player) :
     player->getSprites().feet->setTexture(feet.getTexture());
 }
 
+void lex(std::string str, std::string arg[], char seprator) {
+    std::string word = "";
+    int i = 0;
+    for (auto x : str) {
+        if (x == seprator)
+        {
+            i++;
+            arg[i] = word;
+            word = "";
+        }
+        else
+        {
+            word = word += x;
+        }
+        arg[i] = word;
+    }
+}
+
+void PlayerAnimation::setFromPacket(std::string const& animPacket) {
+    // set animation from packet
+    std::string parts[3];
+    lex(animPacket, parts, ':');
+
+    std::string& feet = parts[0];
+    std::string& body = parts[1];
+    std::string& head = parts[2];
+}
+
+std::string PlayerAnimation::exportToPacket() {
+    
+    
+}
+
 void PlayerAnimation::update(int row, sf::Time deltaTime, bool i, AttackState state)
 {
     float dt = deltaTime.asSeconds();

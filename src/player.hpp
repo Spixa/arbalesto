@@ -34,6 +34,8 @@ public:
     }
 
     bool isControlled() const { return controlled; }
+    bool hasAnimationUpdated() { return animUpdate; }
+    
     void setControlled(bool tof) { 
         controlled = tof; 
     
@@ -124,6 +126,7 @@ private:
     bool inv;
     bool moving;
     bool controlled;
+    bool animUpdate = false;
     std::string displayName;
 
     PlayerAnimation anim;

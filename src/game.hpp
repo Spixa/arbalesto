@@ -15,6 +15,7 @@ public:
 
     StateManager* getStateManager() { return &state_man_; }
     bool isFocused();
+    sf::RenderWindow& getWindow() { return window_; }
 
     unsigned int failedPacketCounter = 0;
 private:

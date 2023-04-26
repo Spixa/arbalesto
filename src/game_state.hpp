@@ -1,5 +1,6 @@
 #pragma once
 #include "state.hpp"
+#include "client/clientworld.hpp"
 
 class Player;
 class GameState : public State {
@@ -16,4 +17,5 @@ protected:
     void draw(sf::RenderTarget& targ, sf::RenderStates states) const override;
     Player* p;
     std::vector<Player*> players;
+    ClientWorld world{};
 };

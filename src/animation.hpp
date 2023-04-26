@@ -52,7 +52,11 @@ class PlayerAnimation {
 public:
     PlayerAnimation(float switchTime, Player* player);
     void update(int row, sf::Time deltaTime, bool i, AttackState state);
+
+    void setFromPacket(std::string const& animPacket);
+    std::string exportToPacket()
 private:
     AnimatedTexture body, hand, feet;
+    std::string handText, bodyText, feetText;
     Player* player;
 };
