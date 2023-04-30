@@ -47,14 +47,14 @@ void PlayerAnimation::setFromPacket(std::string const& animPacket) {
 }
 
 std::string PlayerAnimation::exportToPacket() {
-    
+
     
 }
 
-void PlayerAnimation::update(int row, sf::Time deltaTime, bool i, AttackState state)
+void PlayerAnimation::update(int row, sf::Time deltaTime, bool i, AttackState state )
 {
     float dt = deltaTime.asSeconds();
-
+    
     switch (state) {
         case AttackState::Fist: {
             body.update(row, dt);

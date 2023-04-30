@@ -79,6 +79,10 @@ public:
 
         move(velo);
 
+        if (!controlled) {
+            velo = {0.f, 0.f};
+        }
+
         if (velo.x < 0) inv = true;
         else if (velo.x > 0) inv = false;
         else {}
@@ -109,6 +113,8 @@ public:
         displayName = name;
         displayNameText.setString(displayName);
     }
+
+    void setVelocity(sf::Vector2f const& velo) { this->velo = velo; }
 protected:
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
         states.transform *= getTransform();

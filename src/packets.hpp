@@ -18,6 +18,7 @@ namespace net {
         ServerBroadcastPacket = 9,
         WelcomePacket = 10,
         UpdateAnimationPacket = 11,
+        AddWorldObjectPacket = 12,
     };
 
     enum class TeleportReason: sf::Uint8 {

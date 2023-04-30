@@ -179,7 +179,7 @@ void Server::receivePackets(Client* client, size_t iterator) {
                 }
 
                 sf::Packet updatePosition;
-                updatePosition << net::Packet::UpdatePositionPacket << client->getName() << newX << newY;
+                updatePosition << net::Packet::UpdatePositionPacket << client->getName() << dX << dY;
                 
                 broadcastPacket(updatePosition, client->socket()->getRemoteAddress(), client->socket()->getRemotePort());
 
