@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-Player::Player(ItemType holding_stuff, sf::Vector2f spawn) : Entity(next(), EntityType::PlayerEntity, 100.f), sprite("player", {4,5}, 0.1) {
+Player::Player(ItemType holding_stuff, sf::Vector2f spawn, float health) : Entity(next(), EntityType::PlayerEntity, health), sprite("player", {4,5}, 0.1) {
     if (holding_stuff == ItemType::Bow) holding = std::make_unique<Bow>();
     else holding = std::make_unique<Sword>();
     setPosition(spawn);
@@ -75,7 +75,47 @@ void Player::update(sf::Time elapsed) {
 
     sprite.update(elapsed, row, inv);
 
-    move(velocity * elapsed.asSeconds());
+    // MOVING LOGIC - sliding collisions
+    sf::Vector2f currentPos = getPosition();
+    sf::Vector2f proposedMove = velocity * elapsed.asSeconds();
+    sf::Vector2f halfSize{8.f, 8.f}; // player is 16x16px
+
+    // x movement
+    if (proposedMove.x != 0.f) {
+        float edgeX = currentPos.x + proposedMove.x + (proposedMove.x > 0 ? halfSize.x : -halfSize.x);
+        bool blockedX = false;
+
+        for (float y = currentPos.y - halfSize.y; y <= currentPos.y + halfSize.y; y += 4.f) {
+            if (Game::getInstance()->getWorld()->isSolidAt({edgeX, y}, {1.f, 1.f})) {
+                blockedX = true;
+                break;
+            }
+        }
+
+        if (!blockedX)
+            currentPos.x += proposedMove.x;
+        else
+            velocity.x = 0.f;
+    }
+
+    if (proposedMove.y != 0.f) {
+        float edgeY = currentPos.y + proposedMove.y + (proposedMove.y > 0 ? halfSize.y : -halfSize.y);
+        bool blockedY = false;
+
+        for (float x = currentPos.x - halfSize.x; x <= currentPos.x + halfSize.x; x += 4.f) {
+            if (Game::getInstance()->getWorld()->isSolidAt({x, edgeY}, {1.f, 1.f})) {
+                blockedY = true;
+                break;
+            }
+        }
+
+        if (!blockedY)
+            currentPos.y += proposedMove.y;
+        else
+            velocity.y = 0.f;
+    }
+
+    setPosition(currentPos);
 }
 
 void Player::update_tick(sf::Time elapsed) {
@@ -110,6 +150,10 @@ void Player::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
     target.draw(health_box, states);
     target.draw(health_bar, states);
+}
+
+ControllingPlayer::~ControllingPlayer() {
+    // Game::getInstance()->getWorld()->addEntity(std::make_unique<ControllingPlayer>());
 }
 
 void ControllingPlayer::update_derived(sf::Time elapsed) {
@@ -190,7 +234,7 @@ void AiPlayer::update_tick_derived(sf::Time dt) {
     }
 
     if (!currentTarget || !currentTarget->isAlive()) {
-        currentTarget = Game::getInstance()->getWorld()->getNearestAiPlayer(this);
+        currentTarget = Game::getInstance()->getWorld()->getNearestEntity(this);
     }
 
     if (currentTarget && holding && holding->getType() == ItemType::Bow) {
@@ -201,15 +245,14 @@ void AiPlayer::update_tick_derived(sf::Time dt) {
         if (desiredDir.x != 0.f || desiredDir.y != 0.f)
             desiredDir /= std::sqrt(desiredDir.x*desiredDir.x + desiredDir.y*desiredDir.y);
 
-        // thanks GPT
-        // --- Smooth rotation ---
+        // SMOOTH ROTATION IMPL
         float rotationSpeed = 5.f; // radians per second
         sf::Vector2f currentDir = holdingDirection; // AI stores current aiming direction
         float dot = currentDir.x*desiredDir.x + currentDir.y*desiredDir.y;
         dot = std::clamp(dot, -1.f, 1.f);
         float angleDiff = std::acos(dot);
 
-        // Determine rotation direction using cross product
+        // determine rotation direction using cross product
         float cross = currentDir.x*desiredDir.y - currentDir.y*desiredDir.x;
         if (angleDiff > 0.001f) {
             float maxRotate = rotationSpeed * dt.asSeconds();
@@ -238,7 +281,7 @@ void AiPlayer::update_tick_derived(sf::Time dt) {
             auto arrow_ptr = std::make_unique<Arrow>(my_pos, holdingDirection, arrowSpeed, arrowLifetime, getId());
             Game::getInstance()->getWorld()->addEntity(std::move(arrow_ptr));
 
-            float nextInterval = 2.f + static_cast<float>(rand() % 2000) / 1000.f; // between 2 and 4 seconds
+            float nextInterval = static_cast<float>(rand() % 2000) / 1000.f; // between 0 and 2 seconds
             arrowInterval = sf::seconds(nextInterval);
         }
     }

@@ -19,6 +19,10 @@ Game::Game()
     texture_man.get("tilesheet", "../res/tilemap/tileset.png");
     texture_man.get("items", "../res/items/items.png");
     texture_man.get("arrow", "../res/entity/arrow/arrow.png");
+
+    fps.setOutlineColor(sf::Color::Black);
+    fps.setOutlineThickness(2.f);
+    fps.setStyle(sf::Text::Style::Bold);
     // window.setFramerateLimit(512);
 }
 
@@ -55,7 +59,7 @@ void Game::update(sf::Time elapsed) {
 
 void Game::update_stats(sf::Time elapsed) {
     if (fps_clock.getElapsedTime().asMilliseconds() >= 125) {
-        fps.setString("Chunks have not requested updates\n" + etc_info);
+        fps.setString("Arbalesto v0.1\n" + etc_info);
         fps_clock.restart();
     }
 }

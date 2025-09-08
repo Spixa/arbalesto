@@ -4,17 +4,21 @@
 #include "../entity/entity.h"
 #include "chunk.h"
 
-class ControllingPlayer;
-class AiPlayer;
+class Player;
 class World : public sf::Drawable, public sf::Transformable {
 public:
     World(std::string const& name);
     virtual ~World();
 
     void addEntity(std::unique_ptr<Entity> entity);
-    ControllingPlayer* getPlayer();
-    AiPlayer* getNearestAiPlayer(Entity* from);
+    Entity* getPlayer();
+    Player* getNearestEntity(Entity* from);
+    bool isSolidAt(sf::Vector2f pos, sf::Vector2f size) const;
+
+public:
     std::string const& getName() { return name; }
+
+public:
     void update(sf::Time dt);
     void update_tick(sf::Time elapsed);
 protected:
@@ -22,7 +26,11 @@ protected:
     void check_arrow_collisions();
 private:
     std::vector<std::unique_ptr<Entity>> entities{};
-    ControllingPlayer* player;
+    Entity* player;
     std::vector<Chunk*> chunk;
     std::string name;
+
+    // test minigame vars:
+    int nmes;
+    bool ctrl_dead = false;
 };

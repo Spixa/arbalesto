@@ -46,4 +46,5 @@ private:
     sf::String etc_info;
     sf::Clock fps_clock;
 private:
+    sf::Image icon;
 };

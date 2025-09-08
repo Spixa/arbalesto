@@ -18,6 +18,16 @@ public:
     Chunk(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> const& data, sf::Vector2i pos);
     virtual ~Chunk();
 
+    bool isSolidTile(int r, int c) {
+        if (r < 0 || r >= CHUNK_SIZE || c < 0 || c >= CHUNK_SIZE)
+            return false;
+
+        Tile tile = data[r * CHUNK_SIZE + c];
+        return tile == Tile::Water;
+    }
+
+    sf::Vector2f getOffset() const { return offset; }
+
     void from_data(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> const& data) {
         this->data = data;
         build();

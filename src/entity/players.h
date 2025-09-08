@@ -6,7 +6,7 @@
 
 class Player : public Entity {
 public:
-    Player(ItemType holding, sf::Vector2f spawn);
+    Player(ItemType holding, sf::Vector2f spawn, float health = 100.f);
     virtual ~Player();
 
     void update(sf::Time elapsed) override;
@@ -44,14 +44,14 @@ private:
     sf::Time arrowInterval;
     sf::Clock arrowCooldown;
 
-    AiPlayer* currentTarget{nullptr};
+    Entity* currentTarget{nullptr};
     sf::Vector2f holdingDirection = {1.f, 0.f};
 };
 
 class ControllingPlayer : public Player {
 public:
-    ControllingPlayer() : Player(ItemType::Bow, {0, 0}) { setInvincible(true); /* TODO: for testing, remove this */ }
-    virtual ~ControllingPlayer() {}
+    ControllingPlayer() : Player(ItemType::Bow, {0, 0}, 100) { setInvincible(false); /* TODO: for testing, remove this */ }
+    virtual ~ControllingPlayer();
 
     void update_derived(sf::Time) override;
 };
