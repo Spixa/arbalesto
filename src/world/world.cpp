@@ -2,9 +2,11 @@
 
 #include "../entity/players.h"
 #include "../entity/arrow.h"
+#include "../item/sword.h"
 #include "../game.h"
 
 #include <algorithm>
+#include <cmath>
 
 World::World(std::string const& name) : name(name) {
     entities.reserve(1000); // TODO FIX: this is a temporary solution I need to fully move to Id's instead of ptrs and weak ptrs
@@ -12,16 +14,26 @@ World::World(std::string const& name) : name(name) {
     for (int y = -2; y <= 2; ++y) {
         for (int x = -2; x <= 2; ++x) {
             sf::Vector2i pos{x, y};
+            std::unique_ptr<Chunk> c;
 
-            if (x >= -1 && x <= 1 && y >= -1 && y <= 1) {
-                // Center chunk = empty
-                chunk.push_back(new Chunk({}, pos));
+            // Try loading chunk from disk
+            Chunk temp({}, pos);
+            if (temp.load()) {
+                c = std::make_unique<Chunk>(temp);
             } else {
-                // Surrounding chunks = full water
-                std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> data{};
-                data.fill(Tile::Water);
-                chunk.push_back(new Chunk(data, pos));
+                // If not found, generate new
+                if (x >= -1 && x <= 1 && y >= -1 && y <= 1) {
+                    c = std::make_unique<Chunk>(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE>{}, pos);
+                } else {
+                    std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> data{};
+                    data.fill(Tile::Water);
+                    c = std::make_unique<Chunk>(data, pos);
+                }
+
+                c->save();
             }
+
+            chunk.push_back(c.release());
         }
     }
 }
@@ -105,7 +117,13 @@ void World::update(sf::Time dt) {
         Game::getInstance()->setInfo("Enemies: " + std::to_string((nmes - 1)));
 
         if (nmes == 1) {
-            Game::getInstance()->setInfo("You are the winner, my friend");
+            Game::getInstance()->setInfo("You won");
+            auto p = dynamic_cast<ControllingPlayer*>(player);
+
+            if (entities.size() == 1) {
+                p->setHolding(nullptr);
+                p->heal();
+            }
         }
     } else {
         Game::getInstance()->setInfo("You died\nYou are now spectating an AI with " + std::to_string((nmes - 1)) + " enemies");
@@ -124,13 +142,28 @@ void World::update_tick(sf::Time elapsed) {
             x->update_tick(elapsed);
     }
 
+    static Tile pref;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) {
+        pref = Tile::Grass;
+    }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num2)) {
+        pref = Tile::Water;
+    }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3)) {
+        pref = Tile::Cobble;
+    }
+
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
         sf::Vector2f mouse = Game::getInstance()->getMouseWorld();
         for (auto&c : chunk) {
-            c->update_tick(mouse);
+            c->update_tick(mouse, pref);
         }
     }
 
+    if (chunk_idle.getElapsedTime() >= sf::seconds(2.f)) {
+        save_dirty_chunks();
+        chunk_idle.restart();
+    }
 }
 
 void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -198,6 +231,15 @@ void World::check_arrow_collisions() {
                 arrow->die();
                 break;
             }
+        }
+    }
+}
+
+void World::save_dirty_chunks() {
+    for (auto& c : chunk) {
+        if (c->isDirty()) {
+            c->save();
+            c->tidy();
         }
     }
 }

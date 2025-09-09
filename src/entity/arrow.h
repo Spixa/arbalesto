@@ -4,7 +4,7 @@
 
 class Arrow : public Entity {
 public:
-    Arrow(sf::Vector2f spawn, sf::Vector2f dir, float speed, sf::Time lifetime, EntityId owner);
+    Arrow(sf::Vector2f spawn, sf::Vector2f dir, float speed, sf::Time lifetime, EntityId owner, sf::Vector2f initial = {0.0, 0.0});
     virtual ~Arrow() = default;
 
     void update(sf::Time elapsed) override;

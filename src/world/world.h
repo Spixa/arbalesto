@@ -24,13 +24,16 @@ public:
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;
     void check_arrow_collisions();
+    void save_dirty_chunks();
 private:
     std::vector<std::unique_ptr<Entity>> entities{};
     Entity* player;
+    sf::Clock chunk_idle{};
     std::vector<Chunk*> chunk;
     std::string name;
 
     // test minigame vars:
     int nmes;
     bool ctrl_dead = false;
+    bool restart_shoot = false;
 };

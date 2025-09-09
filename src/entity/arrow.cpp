@@ -3,12 +3,13 @@
 
 #include <cmath>
 
-Arrow::Arrow(sf::Vector2f spawn, sf::Vector2f dir, float speed, sf::Time lifetime, EntityId owner)
+Arrow::Arrow(sf::Vector2f spawn, sf::Vector2f dir, float speed, sf::Time lifetime, EntityId owner, sf::Vector2f initial)
     : Entity(next(), EntityType::ArrowEntity, 1.f), lifetime(lifetime), sprite(*Game::getInstance()->getTextureManager().get("arrow")), shooter(owner) {
     setPosition(spawn);
     shooter = owner;
     if (dir.length() != 0.f) dir /= dir.length();
     velocity = dir * speed;
+    velocity += initial;
 
     sprite.setOrigin({8, 8});
     angle = sf::radians(std::atan2(dir.y, dir.x));

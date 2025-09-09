@@ -14,6 +14,9 @@ public:
 
     virtual void update_derived(sf::Time elapsed) {}
     virtual void update_tick_derived(sf::Time elapsed) {}
+    void setHolding(std::unique_ptr<Item> item) {
+        holding = std::move(item);
+    }
     sf::FloatRect getBounds() override { return sprite.getGlobalBounds(getTransform()); }
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;
@@ -52,6 +55,5 @@ class ControllingPlayer : public Player {
 public:
     ControllingPlayer() : Player(ItemType::Bow, {0, 0}, 100) { setInvincible(false); /* TODO: for testing, remove this */ }
     virtual ~ControllingPlayer();
-
     void update_derived(sf::Time) override;
 };

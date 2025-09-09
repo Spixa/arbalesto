@@ -147,6 +147,8 @@ void Player::draw(sf::RenderTarget& target, sf::RenderStates states) const {
             target.draw(*holding, states);
         }
 
+    } else {
+        target.draw(sprite, states);
     }
     target.draw(health_box, states);
     target.draw(health_bar, states);
@@ -157,6 +159,7 @@ ControllingPlayer::~ControllingPlayer() {
 }
 
 void ControllingPlayer::update_derived(sf::Time elapsed) {
+
     if (Game::getInstance()->getWindow().hasFocus())
         velocity = sf::Vector2f{
             float(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)),
@@ -187,7 +190,7 @@ void ControllingPlayer::update_derived(sf::Time elapsed) {
 
             if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && arrow_cooldown.getElapsedTime() >= sf::seconds(0.125)) {
                 arrow_cooldown.restart();
-                auto arrow_ptr = std::make_unique<Arrow>(player_pos, looking_at, 300.f, sf::seconds(5.f), getId());
+                auto arrow_ptr = std::make_unique<Arrow>(player_pos, looking_at, 300.f, sf::seconds(5.f), getId(), velocity);
                 // do stuff on the arrow here
                 // end of stuff done on arrow
                 Game::getInstance()->getWorld()->addEntity(std::unique_ptr<Entity>(std::move(arrow_ptr)));
@@ -281,7 +284,7 @@ void AiPlayer::update_tick_derived(sf::Time dt) {
             auto arrow_ptr = std::make_unique<Arrow>(my_pos, holdingDirection, arrowSpeed, arrowLifetime, getId());
             Game::getInstance()->getWorld()->addEntity(std::move(arrow_ptr));
 
-            float nextInterval = static_cast<float>(rand() % 2000) / 1000.f; // between 0 and 2 seconds
+            float nextInterval = 0.006f + static_cast<float>(rand() % 500) / 1000.f; // between 0 and 2 seconds
             arrowInterval = sf::seconds(nextInterval);
         }
     }

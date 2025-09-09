@@ -9,7 +9,7 @@ GameState::GameState() : State("game"), world{"overworld"} {
     world.addEntity(std::make_unique<ControllingPlayer>());
 
     sf::Vector2f center = {0, 0};
-    int count = 64;
+    int count = 90;
     float radius = 200;
     for (int i = 0; i < count; ++i) {
         float angle = 2.f * 3.14159265f * i / count; // angle in radians

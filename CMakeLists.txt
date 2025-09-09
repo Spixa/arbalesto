@@ -10,7 +10,7 @@ endif()
 
 # Strong optimizations + static runtime
 set(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -march=native -static-libstdc++ -static-libgcc"
+    "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -static-libstdc++ -static-libgcc"
 )
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE
     "${CMAKE_EXE_LINKER_FLAGS_RELEASE}"

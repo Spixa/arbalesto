@@ -4,8 +4,8 @@
 #include <cmath>
 
 Chunk::Chunk(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> const& data, sf::Vector2i pos)
-    : data(data), tilesheet(Game::getInstance()->getTextureManager().get("tilesheet")),
-      vertices(sf::PrimitiveType::Triangles, CHUNK_SIZE*CHUNK_SIZE*6) {
+    : data(data), tilesheet(Game::getInstance()->getTextureManager().get("tilesheet")), pos(pos)
+      , vertices(sf::PrimitiveType::Triangles, CHUNK_SIZE*CHUNK_SIZE*6) {
     offset = sf::Vector2f(
         static_cast<float>(pos.x * CHUNK_SIZE * TILE_SIZE),
         static_cast<float>(pos.y * CHUNK_SIZE * TILE_SIZE)
@@ -56,7 +56,7 @@ void Chunk::build() {
     }
 }
 
-void Chunk::update_tick(sf::Vector2f mouse_coords) {
+void Chunk::update_tick(sf::Vector2f mouse_coords, Tile selected) {
     sf::Vector2f local = mouse_coords - offset;
 
     int c = static_cast<int>(local.x / TILE_SIZE);
@@ -65,7 +65,7 @@ void Chunk::update_tick(sf::Vector2f mouse_coords) {
     if (c < 0 || c >= CHUNK_SIZE || r < 0 || r >= CHUNK_SIZE)
         return;
 
-    update_tile(r, c, Tile::Water);
+    update_tile(r, c, selected);
 }
 
 void Chunk::update_tile(int r, int c, Tile new_tile) {
@@ -83,6 +83,8 @@ void Chunk::update_tile(int r, int c, Tile new_tile) {
     quad[3].texCoords = {tx + TILE_SIZE - epsilon, ty + epsilon};
     quad[4].texCoords = {tx + TILE_SIZE - epsilon, ty + TILE_SIZE - epsilon};
     quad[5].texCoords = {tx + epsilon, ty + TILE_SIZE - epsilon};
+
+    dirty = true;
 }
 
 void Chunk::render(sf::RenderTarget& target) {

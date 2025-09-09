@@ -45,6 +45,10 @@ public:
     void setInvincible(bool tof) { invincible = tof; }
     bool isInvincible() const { return invincible; }
     Facing getFacing();
+
+    void heal() {
+        health = initial_health;
+    }
 protected:
     virtual void draw(sf::RenderTarget&, sf::RenderStates) const override = 0;
 protected:
