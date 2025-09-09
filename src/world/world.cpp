@@ -118,12 +118,6 @@ void World::update(sf::Time dt) {
 
         if (nmes == 1) {
             Game::getInstance()->setInfo("You won");
-            auto p = dynamic_cast<ControllingPlayer*>(player);
-
-            if (entities.size() == 1) {
-                p->setHolding(nullptr);
-                p->heal();
-            }
         }
     } else {
         Game::getInstance()->setInfo("You died\nYou are now spectating an AI with " + std::to_string((nmes - 1)) + " enemies");

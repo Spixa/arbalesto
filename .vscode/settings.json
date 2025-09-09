@@ -76,6 +76,22 @@
         "iomanip": "cpp",
         "mutex": "cpp",
         "text_encoding": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "__tree": "cpp",
+        "any": "cpp",
+        "bitset": "cpp",
+        "cfenv": "cpp",
+        "complex": "cpp",
+        "csetjmp": "cpp",
+        "csignal": "cpp",
+        "future": "cpp",
+        "queue": "cpp",
+        "regex": "cpp",
+        "semaphore": "cpp",
+        "shared_mutex": "cpp",
+        "source_location": "cpp",
+        "stack": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     }
 }

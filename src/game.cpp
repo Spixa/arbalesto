@@ -37,6 +37,10 @@ void Game::run() {
             proc_events(elapsed);
             update(elapsed);
             render();
+
+            if (first_shot) {
+                first_shot = false;
+            }
         }
     } catch(std::runtime_error const& e) {
         std::cerr << "ran into an error: " << e.what() << std::endl;
@@ -49,6 +53,8 @@ void Game::proc_events(sf::Time elapsed) {
             window.close();
             exit(0);
         }
+
+        state_man.update_event(event);
     }
 }
 
@@ -59,13 +65,14 @@ void Game::update(sf::Time elapsed) {
 
 void Game::update_stats(sf::Time elapsed) {
     if (fps_clock.getElapsedTime().asMilliseconds() >= 125) {
-        fps.setString("Arbalesto v0.1\n" + etc_info);
+        std::string fps_str = std::to_string(int(1.f / elapsed.asSeconds()));
+        fps.setString("Arbalesto v0.1.4 " "\n" + etc_info);
         fps_clock.restart();
     }
 }
 
 void Game::render() {
-    window.clear();
+    window.clear({34, 42, 111});
 
     window.setView(state_man.getCurrentView());
     state_man.render(window);

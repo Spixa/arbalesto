@@ -20,6 +20,7 @@ public:
         sf::Vector2i mouse_screen = sf::Mouse::getPosition(Game::getInstance()->getWindow());
         return window.mapPixelToCoords(mouse_screen, state_man.getCurrentView());
     }
+    bool isInitial() const { return first_shot; };
 
     void setInfo(sf::String const& info) { etc_info = info; }
 private:
@@ -47,4 +48,5 @@ private:
     sf::Clock fps_clock;
 private:
     sf::Image icon;
+    bool first_shot{true};
 };

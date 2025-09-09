@@ -19,6 +19,7 @@ public:
 public:
     void start() override;
     void update(sf::Time) override;
+    void update_event(std::optional<sf::Event> const& e) override;
     void render(sf::RenderTarget&);
 
     World* getWorld() { return &world; }

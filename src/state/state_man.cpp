@@ -20,6 +20,12 @@ void StateManager::update(sf::Time dt) {
     }
 }
 
+void StateManager::update_event(std::optional<sf::Event> const& e) {
+    if (states[selected]) {
+        states[selected]->update_event(e);
+    }
+}
+
 void StateManager::render(sf::RenderWindow& window) {
     if (states[selected]) {
         states[selected]->render(window);
