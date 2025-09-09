@@ -66,7 +66,7 @@ void Game::update(sf::Time elapsed) {
 void Game::update_stats(sf::Time elapsed) {
     if (fps_clock.getElapsedTime().asMilliseconds() >= 125) {
         std::string fps_str = std::to_string(int(1.f / elapsed.asSeconds()));
-        fps.setString("Arbalesto v0.1.4 " "\n" + etc_info);
+        fps.setString("Arbalesto v0.1.4 (fps: " + fps_str + ")\n" + etc_info);
         fps_clock.restart();
     }
 }

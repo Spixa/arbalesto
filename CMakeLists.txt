@@ -55,6 +55,7 @@ add_executable(${PROJECT_NAME}
   src/entity/entity.cpp
   src/entity/players.cpp
   src/entity/arrow.cpp
+  src/entity/itemstack.cpp
   src/animation/sprite.cpp
   src/world/chunk.cpp
   src/world/world.cpp

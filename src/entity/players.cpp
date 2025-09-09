@@ -26,6 +26,23 @@ Player::Player(ItemType holding_stuff, sf::Vector2f spawn, float health) : Entit
 
 Player::~Player() {}
 
+void Player::pickup(ItemType type) {
+    switch (type) {
+        case ItemType::GoldSword: {
+            setHolding(std::make_unique<Sword>());
+        } break;
+        case ItemType::Bow: {
+            setHolding(std::make_unique<Bow>());
+        } break;
+        case ItemType::HealthPotion: {
+            heal();
+        } break;
+        default: {
+
+        }
+    }
+}
+
 void Player::update(sf::Time elapsed) {
     update_derived(elapsed);
 
@@ -190,7 +207,7 @@ void ControllingPlayer::update_derived(sf::Time elapsed) {
 
             if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && arrow_cooldown.getElapsedTime() >= sf::seconds(0.125)) {
                 arrow_cooldown.restart();
-                auto arrow_ptr = std::make_unique<Arrow>(player_pos, looking_at, 300.f, sf::seconds(5.f), getId(), velocity);
+                auto arrow_ptr = std::make_unique<Arrow>(player_pos, looking_at, 300.f, sf::seconds(5.f), getId());
                 // do stuff on the arrow here
                 // end of stuff done on arrow
                 Game::getInstance()->getWorld()->addEntity(std::unique_ptr<Entity>(std::move(arrow_ptr)));

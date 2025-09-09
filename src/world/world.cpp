@@ -3,9 +3,11 @@
 #include "../entity/players.h"
 #include "../entity/arrow.h"
 #include "../item/sword.h"
+#include "../entity/itemstack.h"
 #include "../game.h"
 
 #include <algorithm>
+#include <random>
 #include <cmath>
 
 World::World(std::string const& name) : name(name) {
@@ -36,6 +38,8 @@ World::World(std::string const& name) : name(name) {
             chunk.push_back(c.release());
         }
     }
+
+    spawn_loot();
 }
 
 World::~World() {
@@ -43,6 +47,9 @@ World::~World() {
 }
 
 void World::addEntity(std::unique_ptr<Entity> entity) {
+    if (dynamic_cast<ControllingPlayer*>(entity.get()))
+        player = entity.get();
+
     entities.push_back(std::move(entity));
 }
 
@@ -106,7 +113,7 @@ void World::update(sf::Time dt) {
             x->update(dt);
     }
 
-    check_arrow_collisions();
+    check_collisions();
     entities.erase(
         std::remove_if(entities.begin(), entities.end(),
             [](auto& e){ return !e->isAlive(); }),
@@ -190,43 +197,83 @@ inline bool overlaps(const sf::FloatRect& a, const sf::FloatRect& b) {
     // if you want “touching counts”, switch < and > to <= and >=.
 }
 
+void World::spawn_loot() {
+    std::vector<sf::Vector2f> candid;
 
-void World::check_arrow_collisions() {
-    for (const auto& uptrA : entities) {
-        auto* arrow = dynamic_cast<Arrow*>(uptrA.get());
-        if (!arrow || !arrow->isAlive())
+    for (auto& c : chunk) {
+        for (int row = 0; row < CHUNK_SIZE; ++row) {
+            for (int col = 0; col < CHUNK_SIZE; ++col) {
+                Tile t = c->getTile(row, col);
+                if (t != Tile::Water) {
+                    // tile center in world space
+                    sf::Vector2f pos = c->getOffset() +
+                        sf::Vector2f{col * TILE_SIZE + TILE_SIZE/2.f,
+                                    row * TILE_SIZE + TILE_SIZE/2.f};
+                    candid.push_back(pos);
+                }
+            }
+        }
+    }
+
+
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::shuffle(candid.begin(), candid.end(), rng);
+    int num = std::min(40, (int) candid.size());
+
+    for (int i = 0; i < num; ++i) {
+        sf::Vector2f spawn = candid[i];
+
+        addEntity(std::make_unique<ItemStack>(ItemType::HealthPotion, spawn));
+    }
+}
+
+
+void World::check_collisions() {
+    std::vector<Arrow*> arrows;
+    std::vector<ItemStack*> items;
+    std::vector<Player*> players;
+
+    // classify entities once
+    for (auto& uptr : entities) {
+        if (!uptr || !uptr->isAlive())
             continue;
 
+        if (auto* a = dynamic_cast<Arrow*>(uptr.get())) arrows.push_back(a);
+        else if (auto* i = dynamic_cast<ItemStack*>(uptr.get())) items.push_back(i);
+        else if (auto* p = dynamic_cast<Player*>(uptr.get())) players.push_back(p);
+    }
+
+    // --- arrows vs players ---
+    for (auto* arrow : arrows) {
         EntityId shooter = arrow->getShooterId();
+        const sf::FloatRect arrowBounds = arrow->getBounds();
 
-        const sf::FloatRect arrowBounds = arrow->getBounds(); // GLOBAL bounds (AABB)
-
-        // pass 2: test arrow against every entity
-        nmes = 0;
-        for (const auto& uptrE : entities) {
-            Entity* e = uptrE.get();
-            if (!e || !e->isAlive())
-                continue;
-
-            if (dynamic_cast<Arrow*>(uptrE.get())) // don't kill other arrows
-                continue;
-            nmes += 1;
-            if (e->getId() == shooter) // don't kill the caster
-                continue;
-
-
-            if (overlaps(arrowBounds, e->getBounds())) {
-                e->damage(10.f);
-
-                if (e == entities[0].get() && !e->isAlive() && !ctrl_dead) {
+        for (auto* p : players) {
+            if (p->getId() == shooter) continue; // don’t hit yourself
+            if (overlaps(arrowBounds, p->getBounds())) {
+                p->damage(10.f);
+                if (p == entities[0].get() && !p->isAlive() && !ctrl_dead) {
                     ctrl_dead = true;
                 }
-
                 arrow->die();
                 break;
             }
         }
     }
+
+    // --- items vs players ---
+    for (auto* item : items) {
+        for (auto* p : players) {
+            if (overlaps(item->getBounds(), p->getBounds())) {
+                p->pickup(item->getType());
+                item->die();
+                break;
+            }
+        }
+    }
+
+    nmes = players.size();
 }
 
 void World::save_dirty_chunks() {

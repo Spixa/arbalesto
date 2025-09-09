@@ -13,6 +13,7 @@ enum class ItemType: uint8_t {
     Bow = 7,
     Bow2 = 8,
     Arrow = 9,
+    HealthPotion = 14,
 };
 
 class Item : public sf::Drawable, public sf::Transformable {
@@ -22,8 +23,9 @@ public:
 
     ItemType getType() { return type;}
     void update(sf::Time dt, bool facing);
+    sf::FloatRect getLocalBounds() const { return item_display.getLocalBounds(); }
 protected:
-    virtual void update_derived(sf::Time dt, bool facing) = 0;
+    virtual void update_derived(sf::Time dt, bool facing) {};
     virtual void onRMB() {};
     virtual void onLMB() {};
 protected:

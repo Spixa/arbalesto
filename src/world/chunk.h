@@ -27,6 +27,10 @@ public:
         return tile == Tile::Water;
     }
 
+    Tile getTile(int r, int c) const {
+        return data[r*CHUNK_SIZE + c];
+    }
+
     sf::Vector2f getOffset() const { return offset; }
 
     [[nodiscard]] bool load() {

@@ -6,6 +6,8 @@
 #include <optional>
 #include <magic_enum.hpp>
 
+#include "../entity/itemstack.h"
+
 GameState::GameState() : State("game"), world{"overworld"} {
     world.addEntity(std::make_unique<ControllingPlayer>());
 

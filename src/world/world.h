@@ -23,7 +23,9 @@ public:
     void update_tick(sf::Time elapsed);
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;
-    void check_arrow_collisions();
+private:
+    void spawn_loot();
+    void check_collisions();
     void save_dirty_chunks();
 private:
     std::vector<std::unique_ptr<Entity>> entities{};

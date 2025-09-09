@@ -17,6 +17,8 @@ public:
     void setHolding(std::unique_ptr<Item> item) {
         holding = std::move(item);
     }
+
+    void pickup(ItemType type);
     sf::FloatRect getBounds() override { return sprite.getGlobalBounds(getTransform()); }
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;

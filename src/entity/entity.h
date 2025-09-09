@@ -6,6 +6,7 @@ enum class EntityType {
     PlayerEntity,
     SpiderEntity,
     ArrowEntity,
+    ItemEntity,
 };
 
 enum class Facing {
