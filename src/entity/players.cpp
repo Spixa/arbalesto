@@ -177,11 +177,13 @@ ControllingPlayer::~ControllingPlayer() {
 
 void ControllingPlayer::update_derived(sf::Time elapsed) {
 
-    if (Game::getInstance()->getWindow().hasFocus())
+    if (Game::getInstance()->shouldWorldFocus())
         velocity = sf::Vector2f{
             float(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)),
             float(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) - sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
         };
+    else
+        velocity = {};
 
     constexpr float speed = 150.0;
     float dt = elapsed.asSeconds();

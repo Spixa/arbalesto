@@ -12,6 +12,7 @@ public:
     void update(sf::Time elapsed);
     void update_event(std::optional<sf::Event> const& e);
     void render(sf::RenderWindow& window);
+    void render_gui(sf::RenderWindow& window);
 
     sf::View& getCurrentView() {
         return states[selected]->view;

@@ -8,7 +8,8 @@
 
 #include "../entity/itemstack.h"
 
-GameState::GameState() : State("game"), world{"overworld"} {
+GameState::GameState() : State("game"), world{"overworld"}, chat{"> ", Game::getInstance()->getFallbackFont(), 32} {
+
     world.addEntity(std::make_unique<ControllingPlayer>());
 
     sf::Vector2f center = {0, 0};
@@ -20,6 +21,18 @@ GameState::GameState() : State("game"), world{"overworld"} {
 
         world.addEntity(std::make_unique<AiPlayer>(pos));
     }
+
+    sf::FloatRect ui = Game::getInstance()->getUIBounds();
+
+    float padding = 20.f;
+
+    // bottom-left anchor
+    chat.setPosition({
+        ui.position.x + 5.f,
+        ui.position.y + ui.size.y - chat.getLocalBounds().size.y - padding
+    });
+
+    chat.setSize({ui.size.x, 40.f});
 }
 
 GameState::~GameState() {
@@ -69,6 +82,7 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
 
     static sf::Vector2f original;
     static float zoom;
+    static bool ignore_next = false;
     if (Game::getInstance()->isInitial()) {
         original = view.getSize();
         zoom = 0.4;
@@ -81,8 +95,37 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
             view.setSize(original * zoom);
         }
     }
+
+    if (const auto* key = e->getIf<sf::Event::KeyPressed>()) {
+        if (key->code == sf::Keyboard::Key::T && !chat.isFocused()) {
+            chat.setFocused(true);
+            Game::getInstance()->pushFocus(UIWidget::CHAT);
+            ignore_next = true;
+            return;
+        }
+
+        if (key->code == sf::Keyboard::Key::Escape && chat.isFocused()) {
+            Game::getInstance()->popFocus(UIWidget::CHAT);
+        }
+
+        if (key->code == sf::Keyboard::Key::Enter && chat.isFocused()) {
+            Game::getInstance()->popFocus(UIWidget::CHAT);
+        }
+    }
+
+    if (const auto* text = e->getIf<sf::Event::TextEntered>()) {
+        if (ignore_next) {
+            ignore_next = false;
+        } else if (chat.isFocused() && text->unicode < 128) {
+            chat.input(static_cast<char>(text->unicode));
+        }
+    }
 }
 
 void GameState::render(sf::RenderTarget& targ) {
     targ.draw(world);
+}
+
+void GameState::render_gui(sf::RenderTarget& targ) {
+    targ.draw(chat);
 }

@@ -2,6 +2,7 @@
 
 #include "util.h"
 #include "res_man.h"
+#include "focus.h"
 #include "state/state_man.h"
 #include "state/game_state.h"
 #include <SFML/Graphics.hpp>
@@ -20,6 +21,30 @@ public:
         sf::Vector2i mouse_screen = sf::Mouse::getPosition(Game::getInstance()->getWindow());
         return window.mapPixelToCoords(mouse_screen, state_man.getCurrentView());
     }
+    sf::Font& getFallbackFont() {
+        return *font_man.get("fallback");
+    }
+    sf::FloatRect getUIBounds() {
+        return {
+            {
+                ui_view.getCenter().x - ui_view.getSize().x / 2.f,
+                ui_view.getCenter().y - ui_view.getSize().y / 2.f
+            },
+            {
+                ui_view.getSize().x,
+                ui_view.getSize().y
+            }
+        };
+    }
+
+    bool shouldWorldFocus() {
+        return focus_stk.shouldWorldFocus() && window.hasFocus();
+    }
+
+    void pushFocus(UIWidget id) { focus_stk.push(id); }
+    void popFocus(UIWidget id) { focus_stk.pop(id); }
+    std::optional<UIWidget> topmostFocus() const { return focus_stk.topmost(); }
+
     bool isInitial() const { return first_shot; };
 
     void setInfo(sf::String const& info) { etc_info = info; }
@@ -49,4 +74,5 @@ private:
 private:
     sf::Image icon;
     bool first_shot{true};
+    FocusStack focus_stk;
 };

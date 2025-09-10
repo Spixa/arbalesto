@@ -59,6 +59,9 @@ void Game::proc_events(sf::Time elapsed) {
 }
 
 void Game::update(sf::Time elapsed) {
+    ui_view.setSize({float(window.getSize().x), float(window.getSize().y)});
+    ui_view.setCenter({window.getSize().x / 2.f, window.getSize().y / 2.f});
+
     update_stats(elapsed);
     state_man.update(elapsed);
 }
@@ -79,6 +82,7 @@ void Game::render() {
 
     window.setView(ui_view);
     window.draw(fps);
+    state_man.render_gui(window);
 
     window.display();
 }

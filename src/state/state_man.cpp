@@ -31,3 +31,9 @@ void StateManager::render(sf::RenderWindow& window) {
         states[selected]->render(window);
     }
 }
+
+void StateManager::render_gui(sf::RenderWindow& window) {
+    if (states[selected]) {
+        states[selected]->render_gui(window);
+    }
+}

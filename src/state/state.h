@@ -14,6 +14,7 @@ public:
     virtual void update(sf::Time elapsed) = 0;
     virtual void update_event(std::optional<sf::Event> const& e) = 0;
     virtual void render(sf::RenderTarget&) = 0;
+    virtual void render_gui(sf::RenderTarget&) = 0;
 protected:
     std::vector<sf::Drawable> drawables;
 private:
