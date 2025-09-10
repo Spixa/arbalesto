@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <fstream>
+#include <iostream>
 
 constexpr uint8_t CHUNK_SIZE = 16;
 
@@ -36,11 +37,15 @@ public:
     [[nodiscard]] bool load() {
         auto path = getFile();
         std::ifstream file(path, std::ios::binary);
-        if (!file) return false;
+        if (!file) {
+            std::cout << "[world] chunk " << path << " does not exist on disk. generating... " << std::endl;
+            return false;
+        }
 
         file.read(reinterpret_cast<char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
         build();
 
+        std::cout << "[world] loaded chunk " << path << std::endl;
         return file.good();
     }
 
@@ -50,6 +55,7 @@ public:
         if (!file) return false;
 
         file.write(reinterpret_cast<const char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
+        std::cout << "[world] saved chunk " << path << " onto disk" << std::endl;
         return true;
     }
     void update_tick(sf::Vector2f mouse_coords, Tile selected);

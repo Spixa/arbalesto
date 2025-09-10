@@ -61,6 +61,7 @@ add_executable(${PROJECT_NAME}
   src/world/world.cpp
   src/item/item.cpp
   src/gui/textedit.cpp
+  src/gui/chatbox.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

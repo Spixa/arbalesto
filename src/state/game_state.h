@@ -5,6 +5,7 @@
 #include "../entity/players.h"
 #include "../world/world.h"
 #include "../gui/textedit.h"
+#include "../gui/chatbox.h"
 
 #define info(x) std::cout << "[client] INFO > " << x << std::endl
 #define warn(x) std::cout << "[client] WARN > " << x << std::endl
@@ -27,6 +28,7 @@ public:
     World* getWorld() { return &world; }
 private:
     World world;
-    TextEdit chat;
+    TextEdit chat_text;
+    ChatBox chat_box;
     sf::Clock tick_clock{};
 };

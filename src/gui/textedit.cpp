@@ -1,6 +1,6 @@
 #include "textedit.h"
 
-TextEdit::TextEdit(sf::String const& prefix, sf::Font const& font, unsigned int char_size) : prefix(prefix), content(""), text(font) {
+TextEdit::TextEdit(sf::String const& prefix, sf::Font const& font, unsigned int char_size) : prefix(prefix), content(""), text(font), cb(nullptr) {
     text.setCharacterSize(char_size);
     text.setFillColor(sf::Color::White);
     text.setOutlineColor(sf::Color::Black);
@@ -22,7 +22,7 @@ void TextEdit::input(char c) {
         if (!content.isEmpty())
             content.erase(content.getSize() - 1, 1);
     } else if (c == ENTER1 || c == ENTER2) {
-        last_submitted = content;
+        if (cb) cb(content);
         content.clear();
         focused = false;
     } else if (c == ESCAPE) {

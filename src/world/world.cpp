@@ -81,7 +81,8 @@ Player* World::getNearestEntity(Entity* from) {
     if (!from) return nullptr;
 
     Player* nearest = nullptr;
-    float minDistanceSq = std::numeric_limits<float>::max(); // use squared distance to avoid sqrt
+    float min_dist = 1000.f;
+    float minDistanceSq = min_dist * min_dist; // use squared distance to avoid sqrt
 
     for (auto& e : entities) {
         if (!e || !e->isAlive() || e.get() == from)

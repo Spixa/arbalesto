@@ -8,7 +8,7 @@
 
 #include "../entity/itemstack.h"
 
-GameState::GameState() : State("game"), world{"overworld"}, chat{"> ", Game::getInstance()->getFallbackFont(), 32} {
+GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 32}, chat_box{Game::getInstance()->getFallbackFont()} {
 
     world.addEntity(std::make_unique<ControllingPlayer>());
 
@@ -27,12 +27,18 @@ GameState::GameState() : State("game"), world{"overworld"}, chat{"> ", Game::get
     float padding = 20.f;
 
     // bottom-left anchor
-    chat.setPosition({
+    chat_text.setPosition({
         ui.position.x + 5.f,
-        ui.position.y + ui.size.y - chat.getLocalBounds().size.y - padding
+        ui.position.y + ui.size.y - chat_text.getLocalBounds().size.y - padding
     });
 
-    chat.setSize({ui.size.x, 40.f});
+    chat_text.setSize({ui.size.x, 40.f});
+    chat_text.setSubmitCallback([this](const sf::String& msg) {
+        if (!msg.isEmpty())
+            chat_box.push("&7[&dDemo&7] &6Player &2> &f" + msg);
+        else
+            chat_box.push("&cHey! &7Sorry, but you can't send an empty message here");
+    });
 }
 
 GameState::~GameState() {
@@ -43,16 +49,17 @@ void GameState::start() {
     info("Started game state");
     view.setSize(Game::getInstance()->getWindow().getDefaultView().getSize());
     view.zoom(1);
-    // original = view.getSize();
 }
 
 void GameState::update(sf::Time dt) {
     static sf::Vector2f original;
     static float zoom;
     static sf::Time remaining;
-    constexpr float ZOOM_TIME = 0.875;
+    constexpr float ZOOM_TIME = 0.5;
 
-    if (Game::getInstance()->isInitial()) {
+    auto* g = Game::getInstance();
+
+    if (g->isInitial()) {
         original = view.getSize();
         zoom = 4.0;
         remaining = sf::seconds(ZOOM_TIME);
@@ -64,11 +71,13 @@ void GameState::update(sf::Time dt) {
         if (t > 1.f) t = 1.f;
 
         // smooth interpolation: zoom goes from 3 -> 1
-        zoom = 3.0f * (1.f - t) + 0.4f * t;
+        zoom = 3.0f * (1.f - t) + 0.2f * t;
         view.setSize(original * zoom);
     }
 
     world.update(dt);
+    chat_text.update();
+    chat_box.update(dt, chat_text.isFocused());
     view.setCenter(world.getPlayer()->getPosition());
 
     if (tick_clock.getElapsedTime() >= sf::seconds(1 / TICKRATE)) {
@@ -83,7 +92,10 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
     static sf::Vector2f original;
     static float zoom;
     static bool ignore_next = false;
-    if (Game::getInstance()->isInitial()) {
+
+    auto* g = Game::getInstance();
+
+    if (g->isInitial()) {
         original = view.getSize();
         zoom = 0.4;
     }
@@ -92,32 +104,36 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
     if (const auto* scroll = e->getIf<sf::Event::MouseWheelScrolled>()) {
         if (scroll->wheel == sf::Mouse::Wheel::Vertical) {
             zoom *= (scroll->delta > 0 ? 0.9f : 1.1f);
+            // zoom = std::clamp(zoom, 0.f, 3.f);
             view.setSize(original * zoom);
         }
     }
 
     if (const auto* key = e->getIf<sf::Event::KeyPressed>()) {
-        if (key->code == sf::Keyboard::Key::T && !chat.isFocused()) {
-            chat.setFocused(true);
-            Game::getInstance()->pushFocus(UIWidget::CHAT);
+        if (key->code == sf::Keyboard::Key::T && !chat_text.isFocused()) {
+            chat_text.setFocused(true);
+            g->pushFocus(UIWidget::CHAT);
+            chat_box.setAlwaysVisible(true);
             ignore_next = true;
             return;
         }
 
-        if (key->code == sf::Keyboard::Key::Escape && chat.isFocused()) {
-            Game::getInstance()->popFocus(UIWidget::CHAT);
+        if (key->code == sf::Keyboard::Key::Escape && chat_text.isFocused()) {
+            g->popFocus(UIWidget::CHAT);
+            chat_box.setAlwaysVisible(false);
         }
 
-        if (key->code == sf::Keyboard::Key::Enter && chat.isFocused()) {
-            Game::getInstance()->popFocus(UIWidget::CHAT);
+        if (key->code == sf::Keyboard::Key::Enter && chat_text.isFocused()) {
+            g->popFocus(UIWidget::CHAT);
+            chat_box.setAlwaysVisible(false);
         }
     }
 
     if (const auto* text = e->getIf<sf::Event::TextEntered>()) {
         if (ignore_next) {
             ignore_next = false;
-        } else if (chat.isFocused() && text->unicode < 128) {
-            chat.input(static_cast<char>(text->unicode));
+        } else if (chat_text.isFocused() && text->unicode < 128) {
+            chat_text.input(static_cast<char>(text->unicode));
         }
     }
 }
@@ -127,5 +143,6 @@ void GameState::render(sf::RenderTarget& targ) {
 }
 
 void GameState::render_gui(sf::RenderTarget& targ) {
-    targ.draw(chat);
+    targ.draw(chat_text);
+    targ.draw(chat_box);
 }

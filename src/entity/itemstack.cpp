@@ -4,6 +4,7 @@
 
 ItemStack::ItemStack(ItemType type, sf::Vector2f const& spawn) : Entity(next(), EntityType::ItemEntity, 2000.0), base_transform(spawn), item(std::make_unique<Item>(type)) {
     setPosition(spawn);
+    setOrigin({8, 8});
 }
 
 void ItemStack::draw(sf::RenderTarget& target, sf::RenderStates states) const {

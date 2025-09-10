@@ -12,7 +12,7 @@ Game* Game::getInstance() {
 }
 
 Game::Game()
-    : window(sf::VideoMode::getFullscreenModes().front(), "Arbalesto", sf::Style::Close, sf::State::Fullscreen), dt_clock(), state_man(), fps(*font_man.get("fallback", "../res/arial.ttf").get())
+    : window(sf::VideoMode::getFullscreenModes().front(), "Arbalesto", sf::Style::Close, sf::State::Fullscreen), dt_clock(), state_man(), fps(*font_man.get("fallback", "../res/boldpixels.ttf").get())
 {
     texture_man.get("player_idle", "../res/entity/player/idle.png");
     texture_man.get("player_walk", "../res/entity/player/walk.png");
