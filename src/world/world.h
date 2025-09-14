@@ -38,4 +38,5 @@ private:
     int nmes;
     bool ctrl_dead = false;
     bool restart_shoot = false;
+    sf::Clock grace{};
 };

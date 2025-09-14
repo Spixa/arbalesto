@@ -10,7 +10,6 @@ enum class UIWidget : uint32_t {
     SETTINGS
 };
 
-
 class FocusStack {
 public:
     using WidgetId = UIWidget;

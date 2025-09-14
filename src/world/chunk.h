@@ -9,7 +9,7 @@ constexpr uint8_t CHUNK_SIZE = 16;
 enum class Tile: uint32_t {
     Grass = 0,
     Water = 1,
-    Tree = 2,
+    Wood = 2,
     Cobble = 3,
 };
 
@@ -25,7 +25,7 @@ public:
             return false;
 
         Tile tile = data[r * CHUNK_SIZE + c];
-        return tile == Tile::Water;
+        return tile == Tile::Water || tile == Tile::Cobble;
     }
 
     Tile getTile(int r, int c) const {
@@ -33,6 +33,11 @@ public:
     }
 
     sf::Vector2f getOffset() const { return offset; }
+
+    sf::FloatRect getBounds() const {
+        float size = CHUNK_SIZE * TILE_SIZE;
+        return sf::FloatRect({offset.x, offset.y}, {size, size});
+    }
 
     [[nodiscard]] bool load() {
         auto path = getFile();

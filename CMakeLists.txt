@@ -52,6 +52,7 @@ add_executable(${PROJECT_NAME}
   src/game.cpp
   src/state/state_man.cpp
   src/state/game_state.cpp
+  src/state/menu_state.cpp
   src/entity/entity.cpp
   src/entity/players.cpp
   src/entity/arrow.cpp
@@ -62,6 +63,7 @@ add_executable(${PROJECT_NAME}
   src/item/item.cpp
   src/gui/textedit.cpp
   src/gui/chatbox.cpp
+  src/gui/button.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

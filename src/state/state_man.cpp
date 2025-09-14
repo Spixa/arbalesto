@@ -1,11 +1,16 @@
 #include "state_man.h"
+
 #include "game_state.h"
+#include "menu_state.h"
 
 StateManager::StateManager() {
 
 }
 
 void StateManager::init() {
+    State::Ptr menu_state = std::make_shared<MenuState>();
+    states.push_back(menu_state);
+
     State::Ptr game_state = std::make_shared<GameState>();
     states.push_back(game_state);
 

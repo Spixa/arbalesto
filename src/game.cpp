@@ -23,6 +23,7 @@ Game::Game()
     fps.setOutlineColor(sf::Color::Black);
     fps.setOutlineThickness(2.f);
     fps.setStyle(sf::Text::Style::Bold);
+    def_view = window.getDefaultView();
     // window.setFramerateLimit(512);
 }
 
@@ -75,7 +76,8 @@ void Game::update_stats(sf::Time elapsed) {
 }
 
 void Game::render() {
-    window.clear({34, 42, 111});
+    // window.clear({34, 42, 111});
+    window.clear();
 
     window.setView(state_man.getCurrentView());
     state_man.render(window);
@@ -85,4 +87,8 @@ void Game::render() {
     state_man.render_gui(window);
 
     window.display();
+}
+
+void Game::tell(sf::String const& raw) {
+    state_man.getGameState()->tell(raw);
 }

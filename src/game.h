@@ -14,6 +14,7 @@ public:
     static Game* getInstance();
 
     sf::RenderWindow& getWindow() { return window; }
+    sf::View& getDefaultView() { return def_view; }
     ResourceManager<sf::Texture>& getTextureManager() { return texture_man; }
     StateManager& getStateManager() { return state_man; }
     World* getWorld() { return state_man.getGameState()->getWorld(); }
@@ -48,6 +49,7 @@ public:
     bool isInitial() const { return first_shot; };
 
     void setInfo(sf::String const& info) { etc_info = info; }
+    void tell(sf::String const& raw);
 private:
     Game();
     ~Game();
@@ -65,6 +67,7 @@ private:
     ResourceManager<sf::Font> font_man;
     sf::RenderWindow window;
     sf::View ui_view;
+    sf::View def_view;
     sf::Clock dt_clock;
 private:
     // app stats

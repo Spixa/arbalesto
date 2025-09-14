@@ -4,6 +4,11 @@
 #include "state.h"
 #include "game_state.h"
 
+enum class StateId : size_t {
+    MENUSTATE = 0,
+    GAMESTATE = 1,
+};
+
 class StateManager {
 public:
     StateManager();
@@ -20,9 +25,20 @@ public:
 
 
     GameState* getGameState() {
-        return dynamic_cast<GameState*>(states[0].get());
+        return dynamic_cast<GameState*>(states[static_cast<size_t>(StateId::GAMESTATE)].get());
     }
 
+    bool setState(StateId id) {
+        size_t tmp = selected;
+        selected = static_cast<size_t>(id);
+
+        if (states[selected]) {
+            return true;
+        } else {
+            selected = tmp;
+            return false;
+        }
+    }
 private:
     std::vector<State::Ptr> states;
     size_t selected{0};

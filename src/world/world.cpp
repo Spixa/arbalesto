@@ -10,6 +10,25 @@
 #include <random>
 #include <cmath>
 
+namespace {
+    inline bool overlaps(const sf::FloatRect& a, const sf::FloatRect& b) {
+        const float aLeft   = a.position.x;
+        const float aTop    = a.position.y;
+        const float aRight  = aLeft + a.size.x;
+        const float aBottom = aTop  + a.size.y;
+
+        const float bLeft   = b.position.x;
+        const float bTop    = b.position.y;
+        const float bRight  = bLeft + b.size.x;
+        const float bBottom = bTop  + b.size.y;
+
+        // strict comparisons: touching edges do NOT count as a hit
+        return (aLeft < bRight) && (aRight > bLeft) && (aTop < bBottom) && (aBottom > bTop);
+        // if you want “touching counts”, switch < and > to <= and >=.
+    }
+}
+
+
 World::World(std::string const& name) : name(name) {
     entities.reserve(1000); // TODO FIX: this is a temporary solution I need to fully move to Id's instead of ptrs and weak ptrs
 
@@ -78,6 +97,8 @@ bool World::isSolidAt(sf::Vector2f pos, sf::Vector2f size) const {
 }
 
 Player* World::getNearestEntity(Entity* from) {
+    if (grace.getElapsedTime().asSeconds() <= 10.f)
+        return nullptr;
     if (!from) return nullptr;
 
     Player* nearest = nullptr;
@@ -153,6 +174,8 @@ void World::update_tick(sf::Time elapsed) {
     }
     else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3)) {
         pref = Tile::Cobble;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4)) {
+        pref = Tile::Wood;
     }
 
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
@@ -171,31 +194,30 @@ void World::update_tick(sf::Time elapsed) {
 void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.transform *= getTransform();
 
+    sf::View const& view = target.getView();
+    constexpr float renderScale = 1.f;
+
+    sf::Vector2f size = view.getSize() * renderScale;
+    sf::Vector2f center = view.getCenter();
+
+    sf::FloatRect viewRect(
+        center - size / 2.f,
+        size
+    );
+
     for (auto& c: chunk) {
-        c->render(target);
+        if (::overlaps(viewRect, c->getBounds())) {
+            c->render(target);
+        }
     }
 
     for (auto& x : entities) {
-        if (x)
+        if (!x) continue;
+
+        if (::overlaps(viewRect, x->getBounds())) {
             target.draw(*x, states);
+        }
     }
-}
-
-
-inline bool overlaps(const sf::FloatRect& a, const sf::FloatRect& b) {
-    const float aLeft   = a.position.x;
-    const float aTop    = a.position.y;
-    const float aRight  = aLeft + a.size.x;
-    const float aBottom = aTop  + a.size.y;
-
-    const float bLeft   = b.position.x;
-    const float bTop    = b.position.y;
-    const float bRight  = bLeft + b.size.x;
-    const float bBottom = bTop  + b.size.y;
-
-    // strict comparisons: touching edges do NOT count as a hit
-    return (aLeft < bRight) && (aRight > bLeft) && (aTop < bBottom) && (aBottom > bTop);
-    // if you want “touching counts”, switch < and > to <= and >=.
 }
 
 void World::spawn_loot() {
@@ -205,7 +227,7 @@ void World::spawn_loot() {
         for (int row = 0; row < CHUNK_SIZE; ++row) {
             for (int col = 0; col < CHUNK_SIZE; ++col) {
                 Tile t = c->getTile(row, col);
-                if (t != Tile::Water) {
+                if (t != Tile::Water || t != Tile::Cobble) {
                     // tile center in world space
                     sf::Vector2f pos = c->getOffset() +
                         sf::Vector2f{col * TILE_SIZE + TILE_SIZE/2.f,
@@ -252,11 +274,13 @@ void World::check_collisions() {
 
         for (auto* p : players) {
             if (p->getId() == shooter) continue; // don’t hit yourself
-            if (overlaps(arrowBounds, p->getBounds())) {
+            if (::overlaps(arrowBounds, p->getBounds())) {
                 p->damage(10.f);
-                if (p == entities[0].get() && !p->isAlive() && !ctrl_dead) {
+                if (dynamic_cast<ControllingPlayer*>(p) && !p->isAlive() && !ctrl_dead) {
                     ctrl_dead = true;
+                    Game::getInstance()->tell("&6Player &fwas slain by an arrow");
                 }
+
                 arrow->die();
                 break;
             }
@@ -266,7 +290,7 @@ void World::check_collisions() {
     // --- items vs players ---
     for (auto* item : items) {
         for (auto* p : players) {
-            if (overlaps(item->getBounds(), p->getBounds())) {
+            if (::overlaps(item->getBounds(), p->getBounds())) {
                 p->pickup(item->getType());
                 item->die();
                 break;

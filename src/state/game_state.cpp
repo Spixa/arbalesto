@@ -13,8 +13,8 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
     world.addEntity(std::make_unique<ControllingPlayer>());
 
     sf::Vector2f center = {0, 0};
-    int count = 90;
-    float radius = 200;
+    int count = 50;
+    float radius = 120;
     for (int i = 0; i < count; ++i) {
         float angle = 2.f * 3.14159265f * i / count; // angle in radians
         sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
@@ -34,11 +34,16 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
 
     chat_text.setSize({ui.size.x, 40.f});
     chat_text.setSubmitCallback([this](const sf::String& msg) {
-        if (!msg.isEmpty())
-            chat_box.push("&7[&dDemo&7] &6Player &2> &f" + msg);
-        else
+        if (!msg.isEmpty()) {
+            if (msg[0] != '/') {
+                chat_box.push("&7[&dDemo&7] &6Player &2> &f" + msg);
+            } else {
+                chat_box.push("&cHey! &7Sorry, but that feature is unimplemented");
+            }
+        } else
             chat_box.push("&cHey! &7Sorry, but you can't send an empty message here");
     });
+    chat_box.push("&6Welcome to &dArbalesto&6. You have &c10 &6seconds of grace!");
 }
 
 GameState::~GameState() {
@@ -47,33 +52,12 @@ GameState::~GameState() {
 
 void GameState::start() {
     info("Started game state");
-    view.setSize(Game::getInstance()->getWindow().getDefaultView().getSize());
-    view.zoom(1);
+    view.setSize(Game::getInstance()->getDefaultView().getSize());
+    view.zoom(1.f);
 }
 
 void GameState::update(sf::Time dt) {
-    static sf::Vector2f original;
-    static float zoom;
-    static sf::Time remaining;
-    constexpr float ZOOM_TIME = 0.5;
-
     auto* g = Game::getInstance();
-
-    if (g->isInitial()) {
-        original = view.getSize();
-        zoom = 4.0;
-        remaining = sf::seconds(ZOOM_TIME);
-    }
-
-    if (remaining > sf::Time::Zero) {
-        remaining -= dt;
-        float t = 1.f - remaining.asSeconds() / ZOOM_TIME;
-        if (t > 1.f) t = 1.f;
-
-        // smooth interpolation: zoom goes from 3 -> 1
-        zoom = 3.0f * (1.f - t) + 0.2f * t;
-        view.setSize(original * zoom);
-    }
 
     world.update(dt);
     chat_text.update();
@@ -89,22 +73,16 @@ void GameState::update(sf::Time dt) {
 void GameState::update_event(const std::optional<sf::Event>& e) {
     if (!e.has_value()) return;  // optional is empty
 
-    static sf::Vector2f original;
-    static float zoom;
+    static sf::Vector2f original = view.getSize();
+    static float zoom = 1;
     static bool ignore_next = false;
-
     auto* g = Game::getInstance();
-
-    if (g->isInitial()) {
-        original = view.getSize();
-        zoom = 0.4;
-    }
 
     // Check for MouseWheelScrolled safely
     if (const auto* scroll = e->getIf<sf::Event::MouseWheelScrolled>()) {
         if (scroll->wheel == sf::Mouse::Wheel::Vertical) {
             zoom *= (scroll->delta > 0 ? 0.9f : 1.1f);
-            // zoom = std::clamp(zoom, 0.f, 3.f);
+            zoom = std::clamp(zoom, 0.1f, 0.7f);
             view.setSize(original * zoom);
         }
     }
@@ -117,6 +95,14 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
             ignore_next = true;
             return;
         }
+
+        if (key->code == sf::Keyboard::Key::Slash && !chat_text.isFocused()) {
+            chat_text.setFocused(true);
+            g->pushFocus(UIWidget::CHAT);
+            chat_box.setAlwaysVisible(true);
+            return;
+        }
+
 
         if (key->code == sf::Keyboard::Key::Escape && chat_text.isFocused()) {
             g->popFocus(UIWidget::CHAT);
@@ -145,4 +131,8 @@ void GameState::render(sf::RenderTarget& targ) {
 void GameState::render_gui(sf::RenderTarget& targ) {
     targ.draw(chat_text);
     targ.draw(chat_box);
+}
+
+void GameState::tell(sf::String const& raw) {
+    chat_box.push(raw);
 }

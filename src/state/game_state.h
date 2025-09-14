@@ -25,6 +25,7 @@ public:
     void render(sf::RenderTarget&) override;
     void render_gui(sf::RenderTarget&) override;
 
+    void tell(sf::String const& raw);
     World* getWorld() { return &world; }
 private:
     World world;
