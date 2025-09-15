@@ -9,5 +9,5 @@ struct LightSource {
 };
 
 struct LightTile {
-    float intensity = 1.f;
+    float intensity = 0.f;
 };

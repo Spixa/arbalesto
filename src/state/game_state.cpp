@@ -92,7 +92,7 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
             LightSource source;
             source.position = world.getPlayer()->getPosition();
             source.color = sf::Color::White;
-            source.radius = 75.0;
+            source.radius = 300.0;
 
             world.addLight(source);
         }

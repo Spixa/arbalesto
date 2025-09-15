@@ -32,7 +32,8 @@ protected:
 private:
     void spawn_loot();
     void check_collisions();
-    void propagate_light(const LightSource& src, std::vector<std::vector<LightTile>>& grid) const;
+    void propagate_light(const LightSource& light, std::vector<std::vector<LightTile>>& grid,const sf::Vector2i& viewTileOffset, int worldWidthTiles, int worldHeightTiles) const;
+    sf::Sprite getTileLightSprite(float intensity, float radius) const;
     void save_dirty_chunks();
 private:
     std::vector<std::unique_ptr<Entity>> entities{};
@@ -47,8 +48,11 @@ private:
     std::string name;
 
     // daynight cycle
-    uint64_t time;
+    uint64_t time = 20 * 60 * 0;
     static constexpr uint64_t DAY_LENGTH = 60 * 20 * 60; // 60 minute for now
+    bool pause_time = true;
+    std::vector<std::vector<LightTile>> tile_light_grid;
+    std::vector<std::vector<bool>> dirty_tiles;
 
     // test minigame vars:
     int nmes;

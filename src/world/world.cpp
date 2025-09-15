@@ -134,7 +134,9 @@ bool World::isValidTile(const sf::Vector2i& tile) const {
     return false;
 }
 
-void World::propagate_light(const LightSource& light, std::vector<std::vector<LightTile>>& grid) const {
+void World::propagate_light(
+    const LightSource& light, std::vector<std::vector<LightTile>>& grid,const sf::Vector2i& viewTileOffset, int worldWidthTiles, int worldHeightTiles
+) const {
     static const std::vector<sf::Vector2i> directions = {
         {1,0}, {-1,0}, {0,1}, {0,-1}
     };
@@ -144,29 +146,67 @@ void World::propagate_light(const LightSource& light, std::vector<std::vector<Li
 
     std::queue<sf::Vector2i> queue;
     queue.push(center);
-    grid[center.x][center.y].intensity = 1.f; // src tile is highest intensity
+
+    auto setIntensity = [&](const sf::Vector2i& tile, float intensity){
+        sf::Vector2i local(tile.x - viewTileOffset.x, tile.y - viewTileOffset.y);
+        if (local.x < 0 || local.x >= worldWidthTiles || local.y < 0 || local.y >= worldHeightTiles)
+            return;
+        grid[local.x][local.y].intensity += intensity;
+        grid[local.x][local.y].intensity = std::min(grid[local.x][local.y].intensity, 1.f);
+
+    };
+
+    setIntensity(center, 1.0);
 
     while (!queue.empty()) {
         sf::Vector2i tile = queue.front(); queue.pop(); // take last tile
-        float cur_i = grid[tile.x][tile.y].intensity;
+
+        sf::Vector2i local(tile.x - viewTileOffset.x, tile.y - viewTileOffset.y);
+        float cur_i = grid[local.x][local.y].intensity;
+
         for (auto& dir : directions) {
             sf::Vector2i neighbor = tile + dir;
-            if (!isValidTile(neighbor)) continue;
-            if (grid[neighbor.x][neighbor.y].intensity > 0.f) continue;
+            sf::Vector2i localNeighbor(neighbor.x - viewTileOffset.x, neighbor.y - viewTileOffset.y);
 
-            if (isSolidAt(sf::Vector2f(neighbor.x * TILE_SIZE, neighbor.y * TILE_SIZE), {TILE_SIZE, TILE_SIZE}))
-                continue; // stop light
+            if (localNeighbor.x < 0 || localNeighbor.x >= worldWidthTiles ||
+                localNeighbor.y < 0 || localNeighbor.y >= worldHeightTiles)
+                continue;
+
+            if (grid[localNeighbor.x][localNeighbor.y].intensity > 0.f)
+                continue;
+
+            if (isSolidAt(sf::Vector2f(neighbor.x * TILE_SIZE, neighbor.y * TILE_SIZE),
+                          {TILE_SIZE, TILE_SIZE}))
+                continue;
 
             float dist = std::sqrt(float((neighbor.x - center.x)*(neighbor.x - center.x) +
                                          (neighbor.y - center.y)*(neighbor.y - center.y)));
             float falloff = std::max(0.f, 1.f - dist / radius_tiles);
             if (falloff <= 0.f) continue;
 
-            grid[neighbor.x][neighbor.y].intensity = falloff;
+            setIntensity(neighbor, falloff);
             queue.push(neighbor);
         }
     }
 }
+
+// pre proc radial gradient
+sf::Sprite World::getTileLightSprite(float intensity, float radius) const {
+    sf::Sprite sprite(light_tex); // your 256x256 gradient texture
+    sprite.setOrigin({light_tex.getSize().x/2.f, light_tex.getSize().y/2.f});
+
+    float scale = (radius * 2.f) / static_cast<float>(light_tex.getSize().x);
+    sprite.setScale({scale, scale});
+
+    sf::Color c = sf::Color::White;
+    c.r = static_cast<uint8_t>(c.r * intensity);
+    c.g = static_cast<uint8_t>(c.g * intensity);
+    c.b = static_cast<uint8_t>(c.b * intensity);
+    sprite.setColor(c);
+
+    return sprite;
+}
+
 
 bool World::isSolidAt(sf::Vector2f pos, sf::Vector2f size) const {
     sf::Vector2f half = size * 0.5f;
@@ -268,7 +308,8 @@ sf::String World::getTimeOfDay() const {
 }
 
 void World::update_tick(sf::Time elapsed) {
-    time = (time + 1 ) % DAY_LENGTH;
+    if (!pause_time)
+        time = (time + 1 ) % DAY_LENGTH;
 
     for (auto& x : entities) {
         if (x && x->isAlive())
@@ -334,23 +375,46 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     lightmap.setView(target.getView());
     lightmap.clear(getAmbientLight());
 
+    // explaination: get the max radius out of all lights then expand view according to that radius
+    float maxRadius = 0.f;
+    for (auto const& l : lights)
+        maxRadius = std::max(maxRadius, l.radius);
+
+    sf::FloatRect expandedView = viewRect;
+    expandedView.position.x -= maxRadius;
+    expandedView.position.y -= maxRadius;
+    expandedView.size.x += 2*maxRadius;
+    expandedView.size.y += 2*maxRadius;
+
+    int worldWidthTiles  = static_cast<int>(expandedView.size.x / TILE_SIZE) + 2;
+    int worldHeightTiles = static_cast<int>(expandedView.size.y / TILE_SIZE) + 2;
+
+    sf::Vector2i viewTileOffset(
+        static_cast<int>(expandedView.position.x / TILE_SIZE),
+        static_cast<int>(expandedView.position.y / TILE_SIZE)
+    );
+
+    std::vector<std::vector<LightTile>> grid(worldWidthTiles, std::vector<LightTile>(worldHeightTiles));
+
     for (auto const& light : lights) {
-        sf::Sprite glow{light_tex};
-        glow.setOrigin({light_tex.getSize().x / 2.f, light_tex.getSize().y / 2.f});
-        glow.setPosition(light.position);
+        propagate_light(light, grid, viewTileOffset, worldWidthTiles, worldHeightTiles);
 
-        constexpr float f = 1.f;
-        sf::Color boostedColor(
-            std::min(255, int(light.color.r * f)),
-            std::min(255, int(light.color.g * f)),
-            std::min(255, int(light.color.b * f))
-        );
-        glow.setColor(boostedColor);
+        for (int x = 0; x < worldWidthTiles; ++x) {
+            for (int y = 0; y < worldHeightTiles; ++y) {
+                float intensity = grid[x][y].intensity;
+                grid[x][y].intensity = 0.f;
+                if (intensity <= 0.f) continue;
 
-        float scale = (light.radius * 2.f) / static_cast<float>(light_tex.getSize().x);
-        glow.setScale({scale, scale});
+                sf::Vector2f tilePos(
+                    (x + viewTileOffset.x) * TILE_SIZE + TILE_SIZE/2.f,
+                    (y + viewTileOffset.y) * TILE_SIZE + TILE_SIZE/2.f
+                );
 
-        lightmap.draw(glow, sf::BlendAdd);
+                sf::Sprite sprite = getTileLightSprite(intensity, TILE_SIZE * 1.5f);
+                sprite.setPosition(tilePos);
+                lightmap.draw(sprite, sf::BlendAdd);
+            }
+        }
     }
 
     lightmap.display(); // render the texture
