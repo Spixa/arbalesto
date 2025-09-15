@@ -92,6 +92,7 @@
         "source_location": "cpp",
         "stack": "cpp",
         "typeindex": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "ranges": "cpp"
     }
 }

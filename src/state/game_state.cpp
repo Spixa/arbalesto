@@ -12,15 +12,15 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
 
     world.addEntity(std::make_unique<ControllingPlayer>());
 
-    sf::Vector2f center = {0, 0};
-    int count = 50;
-    float radius = 120;
-    for (int i = 0; i < count; ++i) {
-        float angle = 2.f * 3.14159265f * i / count; // angle in radians
-        sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
+    // sf::Vector2f center = {0, 0};
+    // int count = 50;
+    // float radius = 120;
+    // for (int i = 0; i < count; ++i) {
+    //     float angle = 2.f * 3.14159265f * i / count; // angle in radians
+    //     sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
 
-        world.addEntity(std::make_unique<AiPlayer>(pos));
-    }
+    //     world.addEntity(std::make_unique<AiPlayer>(pos));
+    // }
 
     sf::FloatRect ui = Game::getInstance()->getUIBounds();
 
@@ -53,32 +53,32 @@ GameState::~GameState() {
 void GameState::start() {
     info("Started game state");
     view.setSize(Game::getInstance()->getDefaultView().getSize());
-    view.zoom(1.f);
+    original = view.getSize();
+    zoom = 0.4f;
+    view.setSize(original * zoom);
 }
 
 void GameState::update(sf::Time dt) {
     auto* g = Game::getInstance();
+    static float accu = 0.f;
+    accu += dt.asSeconds();
 
     world.update(dt);
     chat_text.update();
     chat_box.update(dt, chat_text.isFocused());
     view.setCenter(world.getPlayer()->getPosition());
 
-    if (tick_clock.getElapsedTime() >= sf::seconds(1 / TICKRATE)) {
+    while (accu >= FIXED_DT) {
         world.update_tick(dt);
-        tick_clock.restart();
+        accu -= FIXED_DT;
     }
 }
 
 void GameState::update_event(const std::optional<sf::Event>& e) {
     if (!e.has_value()) return;  // optional is empty
-
-    static sf::Vector2f original = view.getSize();
-    static float zoom = 1;
     static bool ignore_next = false;
     auto* g = Game::getInstance();
 
-    // Check for MouseWheelScrolled safely
     if (const auto* scroll = e->getIf<sf::Event::MouseWheelScrolled>()) {
         if (scroll->wheel == sf::Mouse::Wheel::Vertical) {
             zoom *= (scroll->delta > 0 ? 0.9f : 1.1f);
@@ -88,6 +88,15 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
     }
 
     if (const auto* key = e->getIf<sf::Event::KeyPressed>()) {
+        if (key->code == sf::Keyboard::Key::F && !chat_text.isFocused()) {
+            LightSource source;
+            source.position = world.getPlayer()->getPosition();
+            source.color = sf::Color::White;
+            source.radius = 75.0;
+
+            world.addLight(source);
+        }
+
         if (key->code == sf::Keyboard::Key::T && !chat_text.isFocused()) {
             chat_text.setFocused(true);
             g->pushFocus(UIWidget::CHAT);

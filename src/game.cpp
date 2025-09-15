@@ -24,7 +24,7 @@ Game::Game()
     fps.setOutlineThickness(2.f);
     fps.setStyle(sf::Text::Style::Bold);
     def_view = window.getDefaultView();
-    // window.setFramerateLimit(512);
+    // window.setFramerateLimit(120);
 }
 
 void Game::run() {
@@ -70,7 +70,7 @@ void Game::update(sf::Time elapsed) {
 void Game::update_stats(sf::Time elapsed) {
     if (fps_clock.getElapsedTime().asMilliseconds() >= 125) {
         std::string fps_str = std::to_string(int(1.f / elapsed.asSeconds()));
-        fps.setString("Arbalesto v0.1.4 (fps: " + fps_str + ")\n" + etc_info);
+        fps.setString("Arbalesto v0.1.4 (fps: " + fps_str + ") " + getWorld()->getTimeOfDay() + "\n" + etc_info);
         fps_clock.restart();
     }
 }

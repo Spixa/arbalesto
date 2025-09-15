@@ -12,6 +12,7 @@
 #define error(x) std::cout << "[client] ERROR > " << x << std::endl
 
 constexpr int TICKRATE = 20;
+constexpr float FIXED_DT = 1.0f / TICKRATE;
 
 class GameState : public State {
 public:
@@ -32,4 +33,6 @@ private:
     TextEdit chat_text;
     ChatBox chat_box;
     sf::Clock tick_clock{};
+    float zoom;
+    sf::Vector2f original;
 };
