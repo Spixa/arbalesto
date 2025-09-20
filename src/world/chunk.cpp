@@ -11,6 +11,12 @@ Chunk::Chunk(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> const& data, sf::Vector2i p
         static_cast<float>(pos.y * CHUNK_SIZE * TILE_SIZE)
     );
 
+    border.setPosition(offset);
+    border.setSize({CHUNK_SIZE * TILE_SIZE, CHUNK_SIZE * TILE_SIZE});
+    border.setOutlineColor(sf::Color::Yellow);
+    border.setOutlineThickness(.5f);
+    border.setFillColor(sf::Color::Transparent);
+
     tilesheet->setSmooth(false); // disables linear filtering
     build();
 }
@@ -91,4 +97,5 @@ void Chunk::render(sf::RenderTarget& target) {
     sf::RenderStates states;
     states.texture = tilesheet.get();
     target.draw(vertices, states);
+    target.draw(border);
 }

@@ -103,7 +103,7 @@ void Player::update(sf::Time elapsed) {
         bool blockedX = false;
 
         for (float y = currentPos.y - halfSize.y; y <= currentPos.y + halfSize.y; y += 4.f) {
-            if (Game::getInstance()->getWorld()->isSolidAt({edgeX, y}, {1.f, 1.f})) {
+            if (Game::getInstance()->getWorld()->isPassableAt({edgeX, y}, {1.f, 1.f})) {
                 blockedX = true;
                 break;
             }
@@ -120,7 +120,7 @@ void Player::update(sf::Time elapsed) {
         bool blockedY = false;
 
         for (float x = currentPos.x - halfSize.x; x <= currentPos.x + halfSize.x; x += 4.f) {
-            if (Game::getInstance()->getWorld()->isSolidAt({x, edgeY}, {1.f, 1.f})) {
+            if (Game::getInstance()->getWorld()->isPassableAt({x, edgeY}, {1.f, 1.f})) {
                 blockedY = true;
                 break;
             }

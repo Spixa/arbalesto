@@ -33,6 +33,8 @@ private:
     TextEdit chat_text;
     ChatBox chat_box;
     sf::Clock tick_clock{};
-    float zoom;
+    float zoom = 1.f;
+    float target_zoom = 1.f;
+    float lerp_speed = 8.f;
     sf::Vector2f original;
 };

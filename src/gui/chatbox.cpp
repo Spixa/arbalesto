@@ -59,12 +59,15 @@ ChatLine parse_from_str(sf::String const& raw, const sf::Font& font, unsigned in
         line.height = line.segs.front().text.getCharacterSize() + 2.f;
     }
 
+    line.bg.setSize({Game::getInstance()->getUIBounds().size.x / 3.f, line.height});
+    line.bg.setFillColor(sf::Color{30, 30, 30, 60});
+
     return line;
 }
 
 
 void ChatBox::push(sf::String const& raw) {
-    lines.push_back(parse_from_str(raw, font, 30.f));
+    lines.push_back(parse_from_str(raw, font, 23.f));
     if (lines.size() > max_lines) lines.pop_front();
 
     show_timer = visible_time;
@@ -100,6 +103,14 @@ void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
             alpha *= fade;
         }
 
+        {
+            auto copy = it->bg;
+            copy.setPosition({x, y - it->height});
+            sf::Color c = copy.getFillColor();
+            c.a = static_cast<uint8_t>(alpha / 2);
+            copy.setFillColor(c);
+            target.draw(copy, states);
+        }
         for (auto seg : it->segs) {
             seg.text.setPosition({x, y - it->height});
             sf::Text copy = seg.text;

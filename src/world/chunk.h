@@ -25,7 +25,15 @@ public:
             return false;
 
         Tile tile = data[r * CHUNK_SIZE + c];
-        return tile == Tile::Water || tile == Tile::Cobble;
+        return tile == Tile::Cobble;
+    }
+
+    bool isPassableTile(int r, int c) {
+        if (r < 0 || r >= CHUNK_SIZE || c < 0 || c >= CHUNK_SIZE)
+            return false;
+
+        Tile tile = data[r * CHUNK_SIZE + c];
+        return (tile == Tile::Cobble || tile == Tile::Water);
     }
 
     Tile getTile(int r, int c) const {
@@ -98,4 +106,6 @@ private:
     bool dirty{false};
     std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> data;
     sf::VertexArray vertices;
+
+    sf::RectangleShape border;
 };

@@ -32,6 +32,7 @@ public:
 
     virtual sf::FloatRect getBounds() = 0;
     EntityId getId() const { return id; }
+    EntityType getType() const { return type; }
 
     void damage(float amount) {
         if (!invincible) {

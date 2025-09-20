@@ -8,20 +8,9 @@
 
 #include "../entity/itemstack.h"
 
-GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 32}, chat_box{Game::getInstance()->getFallbackFont()} {
+GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 23}, chat_box{Game::getInstance()->getFallbackFont()} {
 
     world.addEntity(std::make_unique<ControllingPlayer>());
-
-    // sf::Vector2f center = {0, 0};
-    // int count = 50;
-    // float radius = 120;
-    // for (int i = 0; i < count; ++i) {
-    //     float angle = 2.f * 3.14159265f * i / count; // angle in radians
-    //     sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
-
-    //     world.addEntity(std::make_unique<AiPlayer>(pos));
-    // }
-
     sf::FloatRect ui = Game::getInstance()->getUIBounds();
 
     float padding = 20.f;
@@ -32,7 +21,7 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
         ui.position.y + ui.size.y - chat_text.getLocalBounds().size.y - padding
     });
 
-    chat_text.setSize({ui.size.x, 40.f});
+    chat_text.setSize({ui.size.x, 25.f});
     chat_text.setSubmitCallback([this](const sf::String& msg) {
         if (!msg.isEmpty()) {
             if (msg[0] != '/') {
@@ -68,6 +57,12 @@ void GameState::update(sf::Time dt) {
     chat_box.update(dt, chat_text.isFocused());
     view.setCenter(world.getPlayer()->getPosition());
 
+    float t = 1.f - std::exp(-lerp_speed * dt.asSeconds());
+    zoom += (target_zoom - zoom) * t;
+
+    // Apply zoom to view
+    view.setSize(original * zoom);
+
     while (accu >= FIXED_DT) {
         world.update_tick(dt);
         accu -= FIXED_DT;
@@ -81,20 +76,17 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
 
     if (const auto* scroll = e->getIf<sf::Event::MouseWheelScrolled>()) {
         if (scroll->wheel == sf::Mouse::Wheel::Vertical) {
-            zoom *= (scroll->delta > 0 ? 0.9f : 1.1f);
-            zoom = std::clamp(zoom, 0.1f, 0.7f);
-            view.setSize(original * zoom);
+            target_zoom *= (scroll->delta > 0 ? 0.9f : 1.1f);
+            target_zoom = std::clamp(target_zoom, 0.1f, 0.7f);
         }
     }
-
     if (const auto* key = e->getIf<sf::Event::KeyPressed>()) {
         if (key->code == sf::Keyboard::Key::F && !chat_text.isFocused()) {
-            LightSource source;
-            source.position = world.getPlayer()->getPosition();
-            source.color = sf::Color::White;
-            source.radius = 300.0;
-
-            world.addLight(source);
+            world.addLight(
+                world.worldToTileCoords(world.getPlayer()->getPosition()),
+                10.f,
+                sf::Color::White
+            );
         }
 
         if (key->code == sf::Keyboard::Key::T && !chat_text.isFocused()) {

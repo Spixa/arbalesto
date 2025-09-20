@@ -12,21 +12,29 @@
 #include <cmath>
 
 namespace {
+    // inline bool overlaps(const sf::FloatRect& a, const sf::FloatRect& b) {
+    //     const float aLeft   = a.position.x;
+    //     const float aTop    = a.position.y;
+    //     const float aRight  = aLeft + a.size.x;
+    //     const float aBottom = aTop  + a.size.y;
+
+    //     const float bLeft   = b.position.x;
+    //     const float bTop    = b.position.y;
+    //     const float bRight  = bLeft + b.size.x;
+    //     const float bBottom = bTop  + b.size.y;
+
+    //     // strict comparisons: touching edges do NOT count as a hit
+    //     return (aLeft < bRight) && (aRight > bLeft) && (aTop < bBottom) && (aBottom > bTop);
+    //     // if you want “touching counts”, switch < and > to <= and >=.
+    // }
+
     inline bool overlaps(const sf::FloatRect& a, const sf::FloatRect& b) {
-        const float aLeft   = a.position.x;
-        const float aTop    = a.position.y;
-        const float aRight  = aLeft + a.size.x;
-        const float aBottom = aTop  + a.size.y;
-
-        const float bLeft   = b.position.x;
-        const float bTop    = b.position.y;
-        const float bRight  = bLeft + b.size.x;
-        const float bBottom = bTop  + b.size.y;
-
-        // strict comparisons: touching edges do NOT count as a hit
-        return (aLeft < bRight) && (aRight > bLeft) && (aTop < bBottom) && (aBottom > bTop);
-        // if you want “touching counts”, switch < and > to <= and >=.
+        return !(a.position.x + a.size.x  <= b.position.x  ||
+                 b.position.x + b.size.x <= a.position.x  ||
+                 a.position.y  + a.size.y <= b.position.y  ||
+                 b.position.y + b.size.y <= a.position.y);
     }
+
 
     // Inefficient, don't call in loops
     sf::Texture generateRadialGradient(unsigned size = 256) {
@@ -109,10 +117,6 @@ void World::addEntity(std::unique_ptr<Entity> entity) {
     entities.push_back(std::move(entity));
 }
 
-void World::addLight(LightSource source) {
-    lights.push_back(source);
-}
-
 Entity* World::getPlayer() {
     return player;
 }
@@ -134,81 +138,23 @@ bool World::isValidTile(const sf::Vector2i& tile) const {
     return false;
 }
 
-void World::propagate_light(
-    const LightSource& light, std::vector<std::vector<LightTile>>& grid,const sf::Vector2i& viewTileOffset, int worldWidthTiles, int worldHeightTiles
-) const {
-    static const std::vector<sf::Vector2i> directions = {
-        {1,0}, {-1,0}, {0,1}, {0,-1}
-    };
+bool World::isSolidTile(sf::Vector2i const& pos) const {
+    for (auto& c : chunk) {
+        sf::Vector2i local{
+            pos.x - static_cast<int>(c->getOffset().x / TILE_SIZE),
+            pos.y - static_cast<int>(c->getOffset().y / TILE_SIZE)
+        };
 
-    sf::Vector2i center = worldToTileCoords(light.position);
-    int radius_tiles = static_cast<int>(std::ceil(light.radius / TILE_SIZE));
-
-    std::queue<sf::Vector2i> queue;
-    queue.push(center);
-
-    auto setIntensity = [&](const sf::Vector2i& tile, float intensity){
-        sf::Vector2i local(tile.x - viewTileOffset.x, tile.y - viewTileOffset.y);
-        if (local.x < 0 || local.x >= worldWidthTiles || local.y < 0 || local.y >= worldHeightTiles)
-            return;
-        grid[local.x][local.y].intensity += intensity;
-        grid[local.x][local.y].intensity = std::min(grid[local.x][local.y].intensity, 1.f);
-
-    };
-
-    setIntensity(center, 1.0);
-
-    while (!queue.empty()) {
-        sf::Vector2i tile = queue.front(); queue.pop(); // take last tile
-
-        sf::Vector2i local(tile.x - viewTileOffset.x, tile.y - viewTileOffset.y);
-        float cur_i = grid[local.x][local.y].intensity;
-
-        for (auto& dir : directions) {
-            sf::Vector2i neighbor = tile + dir;
-            sf::Vector2i localNeighbor(neighbor.x - viewTileOffset.x, neighbor.y - viewTileOffset.y);
-
-            if (localNeighbor.x < 0 || localNeighbor.x >= worldWidthTiles ||
-                localNeighbor.y < 0 || localNeighbor.y >= worldHeightTiles)
-                continue;
-
-            if (grid[localNeighbor.x][localNeighbor.y].intensity > 0.f)
-                continue;
-
-            if (isSolidAt(sf::Vector2f(neighbor.x * TILE_SIZE, neighbor.y * TILE_SIZE),
-                          {TILE_SIZE, TILE_SIZE}))
-                continue;
-
-            float dist = std::sqrt(float((neighbor.x - center.x)*(neighbor.x - center.x) +
-                                         (neighbor.y - center.y)*(neighbor.y - center.y)));
-            float falloff = std::max(0.f, 1.f - dist / radius_tiles);
-            if (falloff <= 0.f) continue;
-
-            setIntensity(neighbor, falloff);
-            queue.push(neighbor);
+        if (local.x >= 0 && local.x < CHUNK_SIZE &&
+            local.y >= 0 && local.y < CHUNK_SIZE) {
+            return c->isSolidTile(local.y, local.x);
         }
     }
-}
-
-// pre proc radial gradient
-sf::Sprite World::getTileLightSprite(float intensity, float radius) const {
-    sf::Sprite sprite(light_tex); // your 256x256 gradient texture
-    sprite.setOrigin({light_tex.getSize().x/2.f, light_tex.getSize().y/2.f});
-
-    float scale = (radius * 2.f) / static_cast<float>(light_tex.getSize().x);
-    sprite.setScale({scale, scale});
-
-    sf::Color c = sf::Color::White;
-    c.r = static_cast<uint8_t>(c.r * intensity);
-    c.g = static_cast<uint8_t>(c.g * intensity);
-    c.b = static_cast<uint8_t>(c.b * intensity);
-    sprite.setColor(c);
-
-    return sprite;
+    return false;
 }
 
 
-bool World::isSolidAt(sf::Vector2f pos, sf::Vector2f size) const {
+bool World::isPassableAt(sf::Vector2f pos, sf::Vector2f size) const {
     sf::Vector2f half = size * 0.5f;
 
     // Check points inside the bounding box
@@ -219,7 +165,7 @@ bool World::isSolidAt(sf::Vector2f pos, sf::Vector2f size) const {
                 int col = static_cast<int>(local.x / TILE_SIZE);
                 int row = static_cast<int>(local.y / TILE_SIZE);
 
-                if (c->isSolidTile(row, col))
+                if (c->isPassableTile(row, col))
                     return true;
             }
         }
@@ -238,7 +184,7 @@ Player* World::getNearestEntity(Entity* from) {
     float minDistanceSq = min_dist * min_dist; // use squared distance to avoid sqrt
 
     for (auto& e : entities) {
-        if (!e || !e->isAlive() || e.get() == from)
+        if (!e || !e->isAlive() || e.get() == from || e->isInvincible())
             continue;
 
         if (auto* ai = dynamic_cast<Player*>(e.get())) {
@@ -304,6 +250,9 @@ sf::String World::getTimeOfDay() const {
         << ":"
         << std::setw(2) << std::setfill('0') << minutes;
 
+    sf::Vector2i pp = worldToTileCoords(player->getPosition());
+    oss << "\n(" << pp.x << ", " << pp.y << ")";
+
     return oss.str();
 }
 
@@ -312,8 +261,9 @@ void World::update_tick(sf::Time elapsed) {
         time = (time + 1 ) % DAY_LENGTH;
 
     for (auto& x : entities) {
-        if (x && x->isAlive())
+        if (x && x->isAlive()) {
             x->update_tick(elapsed);
+        }
     }
 
     static Tile pref;
@@ -334,6 +284,7 @@ void World::update_tick(sf::Time elapsed) {
         for (auto&c : chunk) {
             c->update_tick(mouse, pref);
         }
+        rebakeLighting();
     }
 
     if (chunk_idle.getElapsedTime() >= sf::seconds(2.f)) {
@@ -370,62 +321,40 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         }
     }
 
-    // light pass
-    const sf::Vector2u window_size = target.getSize();
+    draw_lighting(target);
+}
+
+void World::draw_lighting(sf::RenderTarget& target) const {
     lightmap.setView(target.getView());
     lightmap.clear(getAmbientLight());
 
-    // explaination: get the max radius out of all lights then expand view according to that radius
-    float maxRadius = 0.f;
-    for (auto const& l : lights)
-        maxRadius = std::max(maxRadius, l.radius);
+    sf::VertexArray lightVerts{sf::PrimitiveType::Triangles};
+    for (auto const& [pos, lt] : lightmap_tiles) {
+        if (lt.intensity <= 0.f) continue;
 
-    sf::FloatRect expandedView = viewRect;
-    expandedView.position.x -= maxRadius;
-    expandedView.position.y -= maxRadius;
-    expandedView.size.x += 2*maxRadius;
-    expandedView.size.y += 2*maxRadius;
+        float x = pos.x * TILE_SIZE;
+        float y = pos.y * TILE_SIZE;
+        sf::Color c(255, 255, 200, std::clamp((int)(lt.intensity*20.f), 0, 255));
 
-    int worldWidthTiles  = static_cast<int>(expandedView.size.x / TILE_SIZE) + 2;
-    int worldHeightTiles = static_cast<int>(expandedView.size.y / TILE_SIZE) + 2;
+        // Two triangles per tile (6 vertices)
+        lightVerts.append({{x, y}, c});
+        lightVerts.append({{x + TILE_SIZE, y}, c});
+        lightVerts.append({{x + TILE_SIZE, y + TILE_SIZE}, c});
 
-    sf::Vector2i viewTileOffset(
-        static_cast<int>(expandedView.position.x / TILE_SIZE),
-        static_cast<int>(expandedView.position.y / TILE_SIZE)
-    );
-
-    std::vector<std::vector<LightTile>> grid(worldWidthTiles, std::vector<LightTile>(worldHeightTiles));
-
-    for (auto const& light : lights) {
-        propagate_light(light, grid, viewTileOffset, worldWidthTiles, worldHeightTiles);
-
-        for (int x = 0; x < worldWidthTiles; ++x) {
-            for (int y = 0; y < worldHeightTiles; ++y) {
-                float intensity = grid[x][y].intensity;
-                grid[x][y].intensity = 0.f;
-                if (intensity <= 0.f) continue;
-
-                sf::Vector2f tilePos(
-                    (x + viewTileOffset.x) * TILE_SIZE + TILE_SIZE/2.f,
-                    (y + viewTileOffset.y) * TILE_SIZE + TILE_SIZE/2.f
-                );
-
-                sf::Sprite sprite = getTileLightSprite(intensity, TILE_SIZE * 1.5f);
-                sprite.setPosition(tilePos);
-                lightmap.draw(sprite, sf::BlendAdd);
-            }
-        }
+        lightVerts.append({{x, y}, c});
+        lightVerts.append({{x + TILE_SIZE, y + TILE_SIZE}, c});
+        lightVerts.append({{x, y + TILE_SIZE}, c});
     }
-
-    lightmap.display(); // render the texture
+    lightmap.draw(lightVerts, sf::BlendAdd);
+    lightmap.display();
 
     sf::Sprite lm_sprite{lightmap.getTexture()};
     lm_sprite.setPosition(target.mapPixelToCoords({0, 0}));
-
     lm_sprite.setScale({
-        target.getView().getSize().x / window_size.x,
-        target.getView().getSize().y / window_size.y
+        target.getView().getSize().x / (float)lightmap.getSize().x,
+        target.getView().getSize().y / (float)lightmap.getSize().y
     });
+
     target.draw(lm_sprite, sf::BlendMultiply);
 }
 
@@ -451,44 +380,113 @@ void World::spawn_loot() {
     std::random_device rd;
     std::mt19937 rng(rd());
     std::shuffle(candid.begin(), candid.end(), rng);
-    int num = std::min(40, (int) candid.size());
+    int num = std::min(100000, (int) candid.size());
 
     for (int i = 0; i < num; ++i) {
         sf::Vector2f spawn = candid[i];
-        addEntity(std::make_unique<ItemStack>(ItemType::HealthPotion, spawn));
+        addEntity(std::make_unique<ItemStack>(static_cast<ItemType>(rand() % 16), spawn));
     }
 }
 
+void World::addLight(sf::Vector2i at, float r, sf::Color col) {
+    TileLightSource l;
+    l.color = col;
+    l.position = at;
+    l.radius = r;
+    lights.push_back(l);
+
+    rebakeLighting();
+}
+
+void World::rebakeLighting() {
+    lightmap_tiles.clear();
+
+    for (auto const& src : lights) {
+        std::queue<std::pair<sf::Vector2i, float>> q;
+        std::unordered_map<sf::Vector2i, float, arb::Vector2iHash> visited;
+
+        q.push({src.position, src.radius});
+        visited[src.position] = src.radius;
+
+        while (!q.empty()) {
+            auto [pos, strength] = q.front();
+            q.pop();
+
+            if (!isValidTile(pos)) continue;
+            if (strength <= 0.f) continue;
+
+            // illuminate this tile
+            auto& lt = lightmap_tiles[pos];
+            lt.intensity = std::max(lt.intensity, strength);
+
+            static constexpr float decay = 1.f;
+            float next_strength = strength - decay;
+            if (next_strength <= 0.f) continue;
+
+            // check neighbors
+            for (sf::Vector2i dir : {sf::Vector2i{1,0}, {-1,0}, {0,1}, {0,-1}}) {
+                sf::Vector2i next = pos + dir;
+                if (!isValidTile(next)) continue;
+
+                if (isSolidTile(next)) {
+                    // illuminate the wall once, but don't enqueue
+                    auto& wallLt = lightmap_tiles[next];
+                    wallLt.intensity = std::max(wallLt.intensity, next_strength);
+                    continue;
+                }
+
+                // if not solid → spread
+                if (visited.find(next) == visited.end() || visited[next] < next_strength) {
+                    visited[next] = next_strength;
+                    q.push({next, next_strength});
+                }
+            }
+        }
+    }
+}
 
 void World::check_collisions() {
     std::vector<Arrow*> arrows;
     std::vector<ItemStack*> items;
     std::vector<Player*> players;
 
-    // classify entities once
+    // Preallocate to avoid reallocations
+    arrows.reserve(entities.size());
+    items.reserve(entities.size());
+    players.reserve(entities.size());
+
+    // --- classify entities (fast, no dynamic_cast) ---
     for (auto& uptr : entities) {
         if (!uptr || !uptr->isAlive())
             continue;
 
-        if (auto* a = dynamic_cast<Arrow*>(uptr.get())) arrows.push_back(a);
-        else if (auto* i = dynamic_cast<ItemStack*>(uptr.get())) items.push_back(i);
-        else if (auto* p = dynamic_cast<Player*>(uptr.get())) players.push_back(p);
+        switch (uptr->getType()) {
+            case EntityType::ArrowEntity:
+                arrows.push_back(static_cast<Arrow*>(uptr.get()));
+                break;
+            case EntityType::ItemEntity:
+                items.push_back(static_cast<ItemStack*>(uptr.get()));
+                break;
+            case EntityType::PlayerEntity:
+                players.push_back(static_cast<Player*>(uptr.get()));
+                break;
+            default: break;
+        }
     }
 
     // --- arrows vs players ---
-    for (auto* arrow : arrows) {
-        EntityId shooter = arrow->getShooterId();
-        const sf::FloatRect arrowBounds = arrow->getBounds();
+    for (Arrow* arrow : arrows) {
+        const EntityId shooter = arrow->getShooterId();
+        const sf::FloatRect& ab = arrow->getBounds();
 
-        for (auto* p : players) {
-            if (p->getId() == shooter) continue; // don’t hit yourself
-            if (::overlaps(arrowBounds, p->getBounds())) {
+        for (Player* p : players) {
+            if (p->getId() == shooter) continue;
+            if (::overlaps(ab, p->getBounds())) {
                 p->damage(10.f);
                 if (dynamic_cast<ControllingPlayer*>(p) && !p->isAlive() && !ctrl_dead) {
                     ctrl_dead = true;
                     Game::getInstance()->tell("&6Player &fwas slain by an arrow");
                 }
-
                 arrow->die();
                 break;
             }
@@ -496,19 +494,19 @@ void World::check_collisions() {
     }
 
     // --- items vs players ---
-    for (auto* item : items) {
-        for (auto* p : players) {
-            if (::overlaps(item->getBounds(), p->getBounds())) {
+    for (ItemStack* item : items) {
+        const sf::FloatRect& ib = item->getBounds();
+        for (Player* p : players) {
+            if (::overlaps(ib, p->getBounds())) {
                 p->pickup(item->getType());
                 item->die();
-                break;
+                break; // item consumed
             }
         }
     }
 
     nmes = players.size();
 }
-
 sf::Color World::getAmbientLight() const {
     float t = static_cast<float>(time % DAY_LENGTH) / DAY_LENGTH; // 0..1
 

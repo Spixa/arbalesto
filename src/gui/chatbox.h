@@ -10,6 +10,7 @@ struct ChatSegment {
 
 struct ChatLine {
     std::vector<ChatSegment> segs;
+    sf::RectangleShape bg;
     float height; // pre proc'd
     float alive_time = 0.f;
     static constexpr float max_alive = 10.f;

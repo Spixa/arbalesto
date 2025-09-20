@@ -41,7 +41,6 @@ public:
         }
     }
 
-
     bool shouldWorldFocus() const {
         return stack.empty();
     }

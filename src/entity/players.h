@@ -55,7 +55,7 @@ private:
 
 class ControllingPlayer : public Player {
 public:
-    ControllingPlayer() : Player(ItemType::Bow, {0, 0}, 100) { setInvincible(false); /* TODO: for testing, remove this */ }
+    ControllingPlayer() : Player(ItemType::Bow, {0, 0}, 100) { setInvincible(true); /* TODO: for testing, remove this */ }
     virtual ~ControllingPlayer();
     void update_derived(sf::Time) override;
 };

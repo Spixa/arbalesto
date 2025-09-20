@@ -13,14 +13,17 @@ public:
     virtual ~World();
 
     void addEntity(std::unique_ptr<Entity> entity);
-    void addLight(LightSource light);
+    void addLight(sf::Vector2i at, float r, sf::Color col);
     Entity* getPlayer();
     Player* getNearestEntity(Entity* from);
-    bool isSolidAt(sf::Vector2f pos, sf::Vector2f size) const;
+    bool isPassableAt(sf::Vector2f pos, sf::Vector2f size) const;
     sf::Color getAmbientLight() const;
+    sf::Vector2i worldToTileCoords(const sf::Vector2f& pos) const;
+    bool isValidTile(const sf::Vector2i& tile) const;
+    bool isSolidTile(sf::Vector2i const& pos) const;
     sf::String getTimeOfDay() const;
-    sf::Vector2i worldToTileCoords(sf::Vector2f const& pos) const;
-    bool isValidTile(sf::Vector2i const& tile) const;
+
+    void rebakeLighting(); // expensive
 public:
     std::string const& getName() { return name; }
 
@@ -29,18 +32,19 @@ public:
     void update_tick(sf::Time elapsed);
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;
+    void draw_lighting(sf::RenderTarget&) const;
 private:
-    void spawn_loot();
-    void check_collisions();
-    void propagate_light(const LightSource& light, std::vector<std::vector<LightTile>>& grid,const sf::Vector2i& viewTileOffset, int worldWidthTiles, int worldHeightTiles) const;
-    sf::Sprite getTileLightSprite(float intensity, float radius) const;
-    void save_dirty_chunks();
+    void spawn_loot(); // expensive
+    void check_collisions(); // optimized
+    void save_dirty_chunks(); // expensive
 private:
     std::vector<std::unique_ptr<Entity>> entities{};
 
-    std::vector<LightSource> lights;
+    // lighting
+    std::vector<TileLightSource> lights;
     sf::Texture light_tex;
-    mutable sf::RenderTexture lightmap;
+    mutable sf::RenderTexture lightmap; // because ::draw() is const
+    std::unordered_map<sf::Vector2i, LightTile, arb::Vector2iHash> lightmap_tiles;
 
     Entity* player;
     sf::Clock chunk_idle{};
@@ -48,11 +52,9 @@ private:
     std::string name;
 
     // daynight cycle
-    uint64_t time = 20 * 60 * 0;
+    uint64_t time = 20 * 60 * 15;
     static constexpr uint64_t DAY_LENGTH = 60 * 20 * 60; // 60 minute for now
-    bool pause_time = true;
-    std::vector<std::vector<LightTile>> tile_light_grid;
-    std::vector<std::vector<bool>> dirty_tiles;
+    bool pause_time = false;
 
     // test minigame vars:
     int nmes;
