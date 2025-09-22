@@ -1,0 +1,33 @@
+add_executable(Arbalesto
+  src/main.cpp
+  src/game.cpp
+  src/state/state_man.cpp
+  src/state/game_state.cpp
+  src/state/menu_state.cpp
+  src/entity/entity.cpp
+  src/entity/players.cpp
+  src/entity/arrow.cpp
+  src/entity/itemstack.cpp
+  src/animation/sprite.cpp
+  src/world/chunk.cpp
+  src/world/world.cpp
+  src/item/item.cpp
+  src/gui/textedit.cpp
+  src/gui/chatbox.cpp
+  src/gui/warning.cpp
+  src/gui/button.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+  PRIVATE
+    arbalesto_shared
+    SFML::Graphics
+    SFML::Window
+    SFML::System
+    magic_enum::magic_enum
+)
+
+target_include_directories(${PROJECT_NAME}
+  PRIVATE
+    ${magic_enum_SOURCE_DIR}/include
+)
