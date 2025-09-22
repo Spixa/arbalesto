@@ -18,6 +18,7 @@ public:
         holding = std::move(item);
     }
 
+    void setDisplayname(sf::String const& dname) { displayname.setString(dname); }
     void pickup(ItemType type);
     sf::FloatRect getBounds() override { return sprite.getGlobalBounds(getTransform()); }
 protected:
@@ -26,6 +27,7 @@ protected:
     std::unique_ptr<Item> holding;
     sf::RectangleShape health_box;
     sf::RectangleShape health_bar;
+    sf::Text displayname;
     AnimatedSprite sprite;
     int row;
     bool inv;

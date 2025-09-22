@@ -12,7 +12,9 @@ Game* Game::getInstance() {
 }
 
 Game::Game()
-    : window(sf::VideoMode::getFullscreenModes().front(), "Arbalesto", sf::Style::Close, sf::State::Fullscreen), dt_clock(), state_man(), fps(*font_man.get("fallback", "../res/boldpixels.ttf").get())
+    : window(sf::VideoMode::getFullscreenModes().front(), "Arbalesto", sf::Style::Close, sf::State::Fullscreen),
+    dt_clock(), state_man(), fps(*font_man.get("fallback", "../res/boldpixels.ttf").get()),
+    warning(*font_man.get("fallback"), 5.f)
 {
     texture_man.get("player_idle", "../res/entity/player/idle.png");
     texture_man.get("player_walk", "../res/entity/player/walk.png");
@@ -62,7 +64,7 @@ void Game::proc_events(sf::Time elapsed) {
 void Game::update(sf::Time elapsed) {
     ui_view.setSize({float(window.getSize().x), float(window.getSize().y)});
     ui_view.setCenter({window.getSize().x / 2.f, window.getSize().y / 2.f});
-
+    warning.update(elapsed);
     update_stats(elapsed);
     state_man.update(elapsed);
 }
@@ -83,7 +85,8 @@ void Game::render() {
     state_man.render(window);
 
     window.setView(ui_view);
-    window.draw(fps);
+    // window.draw(fps);
+    window.draw(warning);
     state_man.render_gui(window);
 
     window.display();

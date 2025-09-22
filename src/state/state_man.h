@@ -33,6 +33,7 @@ public:
         selected = static_cast<size_t>(id);
 
         if (states[selected]) {
+            states[selected]->start();
             return true;
         } else {
             selected = tmp;

@@ -6,7 +6,9 @@
 
 #include <cmath>
 
-Player::Player(ItemType holding_stuff, sf::Vector2f spawn, float health) : Entity(next(), EntityType::PlayerEntity, health), sprite("player", {4,5}, 0.1) {
+Player::Player(ItemType holding_stuff, sf::Vector2f spawn, float health) : Entity(next(), EntityType::PlayerEntity, health),
+    sprite("player", {4,5}, 0.1), displayname(Game::getInstance()->getFallbackFont())
+{
     if (holding_stuff == ItemType::Bow) holding = std::make_unique<Bow>();
     else holding = std::make_unique<Sword>();
     setPosition(spawn);
@@ -22,6 +24,10 @@ Player::Player(ItemType holding_stuff, sf::Vector2f spawn, float health) : Entit
 
     health_bar.setPosition({-8, -12});
     health_box.setPosition({-8, -12});
+
+    displayname.setPosition({0, -20});
+    displayname.setCharacterSize(32.f);
+    displayname.setScale({0.25, 0.25});
 }
 
 Player::~Player() {}
@@ -90,6 +96,7 @@ void Player::update(sf::Time elapsed) {
         sprite.setWalking(true);
     }
 
+    displayname.setOrigin(displayname.getLocalBounds().size / 2.f);
     sprite.update(elapsed, row, inv);
 
     // MOVING LOGIC - sliding collisions
@@ -169,6 +176,8 @@ void Player::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
     target.draw(health_box, states);
     target.draw(health_bar, states);
+
+    target.draw(displayname, states);
 }
 
 ControllingPlayer::~ControllingPlayer() {

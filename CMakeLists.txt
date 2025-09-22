@@ -4,17 +4,32 @@ project(Arbalesto VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-endif()
+# ---------------------------------------------------------
+# Custom build option: ULTRA_RELEASE
+# ---------------------------------------------------------
+option(ULTRA_RELEASE "Enable ultra-optimized release build" OFF)
 
-# Strong optimizations + static runtime
-set(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -static-libstdc++ -static-libgcc"
-)
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE
-    "${CMAKE_EXE_LINKER_FLAGS_RELEASE}"
-)
+if(ULTRA_RELEASE)
+  message(STATUS "Configuring in ULTRA_RELEASE mode (max performance)")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+
+  # Aggressive optimization
+  set(CMAKE_CXX_FLAGS_RELEASE
+      "-O3 -DNDEBUG -march=native -flto -fno-plt -fomit-frame-pointer -static-libstdc++ -static-libgcc"
+  )
+  set(CMAKE_EXE_LINKER_FLAGS_RELEASE
+      "-s -flto"
+  )
+else()
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+  endif()
+
+  # Normal release settings
+  set(CMAKE_CXX_FLAGS_RELEASE
+      "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -static-libstdc++ -static-libgcc"
+  )
+endif()
 
 include(FetchContent)
 
@@ -34,19 +49,18 @@ set(SFML_BUILD_DOC OFF CACHE BOOL "" FORCE)
 set(SFML_BUILD_TEST_SUITE OFF CACHE BOOL "" FORCE)
 
 # -------------------------------
-# Find Botan (no botan_generate)
+# Fetch magic_enum
 # -------------------------------
-# find_package(PkgConfig REQUIRED)
-# pkg_check_modules(Botan REQUIRED botan-3)
-
 FetchContent_Declare(
   magic_enum
   GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
-  GIT_TAG v0.9.6 # or latest release
+  GIT_TAG v0.9.6
 )
-
 FetchContent_MakeAvailable(magic_enum)
 
+# -------------------------------
+# Target
+# -------------------------------
 add_executable(${PROJECT_NAME}
   src/main.cpp
   src/game.cpp
@@ -63,6 +77,7 @@ add_executable(${PROJECT_NAME}
   src/item/item.cpp
   src/gui/textedit.cpp
   src/gui/chatbox.cpp
+  src/gui/warning.cpp
   src/gui/button.cpp
 )
 
@@ -72,11 +87,9 @@ target_link_libraries(${PROJECT_NAME}
     SFML::Window
     SFML::System
     magic_enum::magic_enum
-    # ${Botan_LIBRARIES}
 )
 
 target_include_directories(${PROJECT_NAME}
   PRIVATE
-    # ${Botan_INCLUDE_DIRS}
     ${magic_enum_SOURCE_DIR}/include
 )

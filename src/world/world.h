@@ -52,7 +52,7 @@ private:
     std::string name;
 
     // daynight cycle
-    uint64_t time = 20 * 60 * 15;
+    uint64_t time = 20 * 60 * 0;
     static constexpr uint64_t DAY_LENGTH = 60 * 20 * 60; // 60 minute for now
     bool pause_time = false;
 

@@ -380,7 +380,7 @@ void World::spawn_loot() {
     std::random_device rd;
     std::mt19937 rng(rd());
     std::shuffle(candid.begin(), candid.end(), rng);
-    int num = std::min(100000, (int) candid.size());
+    int num = std::min(15, (int) candid.size());
 
     for (int i = 0; i < num; ++i) {
         sf::Vector2f spawn = candid[i];

@@ -11,12 +11,14 @@ public:
     virtual ~MenuState() = default;
 public:
     void start() override;
-    void update(sf::Time) override {}
+    void update(sf::Time) override;
     void update_event(std::optional<sf::Event> const& e) override;
     void render_gui(sf::RenderTarget&) override;
 
     void render(sf::RenderTarget&) override;
 private:
     Button play;
-    sf::RectangleShape test{};
+    TextEdit username;
+    bool uname_input = false;
+    sf::String sel_uname;
 };

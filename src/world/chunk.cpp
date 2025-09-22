@@ -97,5 +97,4 @@ void Chunk::render(sf::RenderTarget& target) {
     sf::RenderStates states;
     states.texture = tilesheet.get();
     target.draw(vertices, states);
-    target.draw(border);
 }

@@ -8,9 +8,10 @@
 
 #include "../entity/itemstack.h"
 
-GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 23}, chat_box{Game::getInstance()->getFallbackFont()} {
+GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 26}, chat_box{Game::getInstance()->getFallbackFont()} {
 
     world.addEntity(std::make_unique<ControllingPlayer>());
+
     sf::FloatRect ui = Game::getInstance()->getUIBounds();
 
     float padding = 20.f;
@@ -21,7 +22,7 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
         ui.position.y + ui.size.y - chat_text.getLocalBounds().size.y - padding
     });
 
-    chat_text.setSize({ui.size.x, 25.f});
+    chat_text.setSize({ui.size.x, 30.f});
     chat_text.setSubmitCallback([this](const sf::String& msg) {
         if (!msg.isEmpty()) {
             if (msg[0] != '/') {
@@ -29,8 +30,10 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
             } else {
                 chat_box.push("&cHey! &7Sorry, but that feature is unimplemented");
             }
-        } else
+        } else {
             chat_box.push("&cHey! &7Sorry, but you can't send an empty message here");
+            Game::getInstance()->sendWarning("Shitty message");
+        }
     });
     chat_box.push("&6Welcome to &dArbalesto&6. You have &c10 &6seconds of grace!");
 }
@@ -41,6 +44,7 @@ GameState::~GameState() {
 
 void GameState::start() {
     info("Started game state");
+    dynamic_cast<Player*>(world.getPlayer())->setDisplayname(Game::getInstance()->getUsername().value_or("unnamed"));
     view.setSize(Game::getInstance()->getDefaultView().getSize());
     original = view.getSize();
     zoom = 0.4f;
