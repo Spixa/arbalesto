@@ -35,6 +35,14 @@ namespace {
                  b.position.y + b.size.y <= a.position.y);
     }
 
+    inline int fdiv(int a, int b) {
+        int q = a / b;
+        int r = a % b;
+        if ((r != 0) && ((a < 0) != (b < 0))) {
+            q--; // round toward -∞
+        }
+        return q;
+    }
 
     // Inefficient, don't call in loops
     sf::Texture generateRadialGradient(unsigned size = 256) {
@@ -155,24 +163,42 @@ bool World::isSolidTile(sf::Vector2i const& pos) const {
 
 
 bool World::isPassableAt(sf::Vector2f pos, sf::Vector2f size) const {
-    sf::Vector2f half = size * 0.5f;
+    // determine the AABB corners of the entity
+    sf::Vector2f min = pos - size * 0.5f;
+    sf::Vector2f max = pos + size * 0.5f;
 
-    // Check points inside the bounding box
-    for (float x = pos.x - half.x; x < pos.x + half.x; x += TILE_SIZE/2.f) {
-        for (float y = pos.y - half.y; y < pos.y + half.y; y += TILE_SIZE/2.f) {
+    int min_tx = static_cast<int>(std::floor(min.x / TILE_SIZE));
+    int max_tx = static_cast<int>(std::floor(max.x / TILE_SIZE));
+    int min_ty = static_cast<int>(std::floor(min.y / TILE_SIZE));
+    int max_ty = static_cast<int>(std::floor(max.y / TILE_SIZE));
+
+    for (int ty = min_ty; ty <= max_ty; ++ty) {
+        for (int tx = min_tx; tx <= max_tx; ++tx) {
+            sf::Vector2i tile{tx, ty};
+            bool passable = false;
+
+            // Find the chunk containing this tile
             for (auto& c : chunk) {
-                sf::Vector2f local = sf::Vector2f{x, y} - c->getOffset();
-                int col = static_cast<int>(local.x / TILE_SIZE);
-                int row = static_cast<int>(local.y / TILE_SIZE);
+                sf::Vector2i local{
+                    tile.x - static_cast<int>(c->getOffset().x / TILE_SIZE),
+                    tile.y - static_cast<int>(c->getOffset().y / TILE_SIZE)
+                };
 
-                if (c->isPassableTile(row, col))
-                    return true;
+                if (local.x >= 0 && local.x < CHUNK_SIZE &&
+                    local.y >= 0 && local.y < CHUNK_SIZE) {
+                    passable = c->isPassableTile(local.y, local.x);
+                    break; // found the chunk
+                }
             }
+
+            if (!passable) return false; // any blocked tile blocks the entity
         }
     }
 
-    return false;
+    return true; // all tiles passable
 }
+
+
 
 Player* World::getNearestEntity(Entity* from) {
     if (grace.getElapsedTime().asSeconds() <= 10.f)
@@ -281,16 +307,50 @@ void World::update_tick(sf::Time elapsed) {
 
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
         sf::Vector2f mouse = Game::getInstance()->getMouseWorld();
-        for (auto&c : chunk) {
-            c->update_tick(mouse, pref);
+
+        for (auto& c : chunk) {
+            sf::Vector2f local = mouse - c->getOffset();
+
+            // Only update if the mouse is *inside this chunk*
+            if (local.x >= 0.f && local.x < CHUNK_SIZE * TILE_SIZE &&
+                local.y >= 0.f && local.y < CHUNK_SIZE * TILE_SIZE) {
+                int cX = static_cast<int>(local.x / TILE_SIZE);
+                int cY = static_cast<int>(local.y / TILE_SIZE);
+
+                c->update_tile(cY, cX, pref);
+                break; // stop after the first matching chunk
+            }
         }
         rebakeLighting();
     }
+
 
     if (chunk_idle.getElapsedTime() >= sf::seconds(2.f)) {
         save_dirty_chunks();
         chunk_idle.restart();
     }
+}
+
+TileRef World::resolve(sf::Vector2i const& wtile) const {
+    int cx = ::fdiv(wtile.x, CHUNK_SIZE);
+    int cy = ::fdiv(wtile.y, CHUNK_SIZE);
+    if (wtile.x < 0 && wtile.x % CHUNK_SIZE != 0) cx--;
+    if (wtile.y < 0 && wtile.y % CHUNK_SIZE != 0) cy--;
+
+    int lx = wtile.x - cx * CHUNK_SIZE;
+    int ly = wtile.y - cy * CHUNK_SIZE;
+
+
+    for (auto& c: chunk) {
+        if (c->getPos() == sf::Vector2i{cx, cy}) {
+            TileRef r;
+            r.lx = lx;
+            r.ly= ly;
+            r.chunk = c;
+            return r;
+        }
+    }
+    return {nullptr, 0, 0};
 }
 
 void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -423,19 +483,30 @@ void World::rebakeLighting() {
             float next_strength = strength - decay;
             if (next_strength <= 0.f) continue;
 
-            // check neighbors
             for (sf::Vector2i dir : {sf::Vector2i{1,0}, {-1,0}, {0,1}, {0,-1}}) {
                 sf::Vector2i next = pos + dir;
                 if (!isValidTile(next)) continue;
 
                 if (isSolidTile(next)) {
-                    // illuminate the wall once, but don't enqueue
+                    // illuminate solid tile
                     auto& wallLt = lightmap_tiles[next];
                     wallLt.intensity = std::max(wallLt.intensity, next_strength);
+
+                    // also illuminate *adjacent* solid tiles (so entire wall gets lit)
+                    for (sf::Vector2i adjDir : {sf::Vector2i{1,0}, {-1,0}, {0,1}, {0,-1}}) {
+                        sf::Vector2i adj = next + adjDir;
+                        if (!isValidTile(adj)) continue;
+                        if (isSolidTile(adj)) {
+                            auto& adjLt = lightmap_tiles[adj];
+                            adjLt.intensity = std::max(adjLt.intensity, next_strength - 0.5f);
+                        }
+                    }
+
+                    // don’t enqueue solid and stop propagation
                     continue;
                 }
 
-                // if not solid → spread
+                // passable tile is enqueued normally
                 if (visited.find(next) == visited.end() || visited[next] < next_strength) {
                     visited[next] = next_strength;
                     q.push({next, next_strength});

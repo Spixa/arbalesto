@@ -36,6 +36,8 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
         }
     });
     chat_box.push("&6Welcome to &dArbalesto&6. You have &c10 &6seconds of grace!");
+    chat_box.push("&6Move with &cWASD&6. Look around with &cMouse &6and shoot");
+    chat_box.push("&6with &cLMB. Chat with &cT &6and emplace a lightsource with &cF");
 }
 
 GameState::~GameState() {
@@ -44,7 +46,7 @@ GameState::~GameState() {
 
 void GameState::start() {
     info("Started game state");
-    dynamic_cast<Player*>(world.getPlayer())->setDisplayname(Game::getInstance()->getUsername().value_or("unnamed"));
+    dynamic_cast<Player*>(world.getPlayer())->setDisplayname(Game::getInstance()->getUsername().value_or("[]"));
     view.setSize(Game::getInstance()->getDefaultView().getSize());
     original = view.getSize();
     zoom = 0.4f;
@@ -88,7 +90,7 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
         if (key->code == sf::Keyboard::Key::F && !chat_text.isFocused()) {
             world.addLight(
                 world.worldToTileCoords(world.getPlayer()->getPosition()),
-                10.f,
+                12.f,
                 sf::Color::Yellow
             );
         }

@@ -15,6 +15,14 @@ enum class Tile: uint32_t {
 
 constexpr float TILE_SIZE = 32.f;
 
+class Chunk;
+struct TileRef {
+    Chunk* chunk;
+    int lx, ly;
+    bool valid() const { return chunk != nullptr; }
+};
+
+
 class Chunk {
 public:
     Chunk(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> const& data, sf::Vector2i pos);
@@ -41,6 +49,7 @@ public:
     }
 
     sf::Vector2f getOffset() const { return offset; }
+    sf::Vector2i getPos() const { return pos; }
 
     sf::FloatRect getBounds() const {
         float size = CHUNK_SIZE * TILE_SIZE;
@@ -77,9 +86,10 @@ public:
     std::string getFile() const {
         std::ostringstream oss;
         auto code = encode_name();
-        oss << std::hex << code << ".bin";
+        oss << "save/" << std::hex << code << ".bin";
         return oss.str();
     }
+    void update_tile(int r, int c, Tile new_tile);
 
     bool isDirty() const { return dirty; }
     void tidy() { dirty = false; }
@@ -98,7 +108,6 @@ private:
     }
 private:
     void build();
-    void update_tile(int r, int c, Tile new_tile);
 private:
     std::shared_ptr<sf::Texture> tilesheet;
     sf::Vector2f offset;

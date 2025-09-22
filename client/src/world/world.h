@@ -24,6 +24,7 @@ public:
     sf::String getTimeOfDay() const;
 
     void rebakeLighting(); // expensive
+    TileRef resolve(sf::Vector2i const& wtile) const;
 public:
     std::string const& getName() { return name; }
 

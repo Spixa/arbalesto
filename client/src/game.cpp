@@ -85,7 +85,7 @@ void Game::render() {
     state_man.render(window);
 
     window.setView(ui_view);
-    // window.draw(fps);
+    window.draw(fps);
     window.draw(warning);
     state_man.render_gui(window);
 

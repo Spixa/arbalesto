@@ -59,7 +59,7 @@ ChatLine parse_from_str(sf::String const& raw, const sf::Font& font, unsigned in
         line.height = line.segs.front().text.getCharacterSize() + 2.f;
     }
 
-    line.bg.setSize({Game::getInstance()->getUIBounds().size.x / 3.f, line.height});
+    line.bg.setSize({Game::getInstance()->getUIBounds().size.x / 2.5f, line.height});
     line.bg.setFillColor(sf::Color{30, 30, 30, 60});
 
     return line;

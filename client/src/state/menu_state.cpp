@@ -26,7 +26,7 @@ MenuState::MenuState() : State("menu"), play("Play", Game::getInstance()->getFal
     sf::FloatRect ui = Game::getInstance()->getUIBounds();
     username.setSize({ui.size.x, 30.f});
 
-    float padding = 20.f;
+    float padding = 15.f;
     username.setPosition({
         ui.position.x + 5.f,
         ui.position.y + ui.size.y - username.getLocalBounds().size.y - padding
