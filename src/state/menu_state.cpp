@@ -1,12 +1,22 @@
 #include "menu_state.h"
 
 #include "../game.h"
+#include <regex>
 
 MenuState::MenuState() : State("menu"), play("Play", Game::getInstance()->getFallbackFont(), {100, 300}), username("Username: ", Game::getInstance()->getFallbackFont(), 30) {
     username.setSubmitCallback([this](const sf::String& msg) {
         if (!msg.isEmpty()) {
-            sel_uname = msg;
-            Game::getInstance()->sendWarning("Username set to " + msg);
+            std::regex r("^[a-zA-Z0-9_]*$");
+            if (std::regex_match(msg.toAnsiString(), r)) {
+                if (msg.getSize() <= 16) {
+                    sel_uname = msg;
+                    Game::getInstance()->sendWarning("Username '" + msg + "' selected");
+                } else {
+                    Game::getInstance()->sendWarning("Username cannot exceed 16 characters");
+                }
+            } else {
+                Game::getInstance()->sendWarning("Please set an alphanumeric username");
+            }
         } else {
             Game::getInstance()->sendWarning("Please don't set an empty username");
         }

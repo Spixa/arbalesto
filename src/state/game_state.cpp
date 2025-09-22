@@ -89,7 +89,7 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
             world.addLight(
                 world.worldToTileCoords(world.getPlayer()->getPosition()),
                 10.f,
-                sf::Color::White
+                sf::Color::Yellow
             );
         }
 
