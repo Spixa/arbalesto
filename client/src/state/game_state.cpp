@@ -103,6 +103,17 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
             return;
         }
 
+        if (key->code == sf::Keyboard::Key::G && !chat_text.isFocused()) {
+            sf::Vector2f center = world.getPlayer()->getPosition();
+            int count = 8;
+            float radius = 200;
+            for (int i = 0; i < count; ++i) {
+                float angle = 2.f * 3.14159265f * i / count; // angle in radians
+                sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
+                world.addEntity(std::make_unique<AiPlayer>(pos));
+            }
+        }
+
         if (key->code == sf::Keyboard::Key::Slash && !chat_text.isFocused()) {
             chat_text.setFocused(true);
             g->pushFocus(UIWidget::CHAT);

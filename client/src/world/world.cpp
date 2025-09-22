@@ -85,6 +85,11 @@ World::World(std::string const& name) : name(name) {
     light_tex = ::generateRadialGradient(256);
     lightmap = sf::RenderTexture(Game::getInstance()->getWindow().getSize());
 
+    tile_highlight.setSize({TILE_SIZE, TILE_SIZE});
+    tile_highlight.setFillColor(sf::Color::Transparent);
+    tile_highlight.setOutlineColor(sf::Color::Yellow);
+    tile_highlight.setOutlineThickness(.7f);
+
     for (int y = -2; y <= 2; ++y) {
         for (int x = -2; x <= 2; ++x) {
             sf::Vector2i pos{x, y};
@@ -131,10 +136,18 @@ Entity* World::getPlayer() {
 
 sf::Vector2i World::worldToTileCoords(const sf::Vector2f& pos) const {
     return sf::Vector2i(
-        static_cast<int>(pos.x / TILE_SIZE),
-        static_cast<int>(pos.y / TILE_SIZE)
+        static_cast<int>(std::floor(pos.x / TILE_SIZE)),
+        static_cast<int>(std::floor(pos.y / TILE_SIZE))
     );
 }
+
+sf::Vector2f World::tileToWorldCoords(const sf::Vector2i& tile) const {
+    return sf::Vector2f{
+        static_cast<float>(tile.x * TILE_SIZE),
+        static_cast<float>(tile.y * TILE_SIZE)
+    };
+}
+
 
 bool World::isValidTile(const sf::Vector2i& tile) const {
     for (auto& c : chunk) {
@@ -247,6 +260,8 @@ void World::update(sf::Time dt) {
             [](auto& e){ return !e->isAlive(); }),
         entities.end()
     );
+
+    tile_highlight.setPosition(tileToWorldCoords(worldToTileCoords(Game::getInstance()->getMouseWorld())));
 
     if (!ctrl_dead) {
         Game::getInstance()->setInfo("Enemies: " + std::to_string((nmes - 1)));
@@ -382,6 +397,7 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
 
     draw_lighting(target);
+    target.draw(tile_highlight);
 }
 
 void World::draw_lighting(sf::RenderTarget& target) const {

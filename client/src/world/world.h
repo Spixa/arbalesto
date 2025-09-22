@@ -19,6 +19,7 @@ public:
     bool isPassableAt(sf::Vector2f pos, sf::Vector2f size) const;
     sf::Color getAmbientLight() const;
     sf::Vector2i worldToTileCoords(const sf::Vector2f& pos) const;
+    sf::Vector2f tileToWorldCoords(const sf::Vector2i& pos) const;
     bool isValidTile(const sf::Vector2i& tile) const;
     bool isSolidTile(sf::Vector2i const& pos) const;
     sf::String getTimeOfDay() const;
@@ -48,6 +49,7 @@ private:
     std::unordered_map<sf::Vector2i, LightTile, arb::Vector2iHash> lightmap_tiles;
 
     Entity* player;
+    sf::RectangleShape tile_highlight;
     sf::Clock chunk_idle{};
     std::vector<Chunk*> chunk;
     std::string name;
