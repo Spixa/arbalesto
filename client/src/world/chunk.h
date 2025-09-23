@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "static.h"
+
 constexpr uint8_t CHUNK_SIZE = 16;
 
 enum class Tile: uint32_t {
@@ -28,12 +30,22 @@ public:
     Chunk(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> const& data, sf::Vector2i pos);
     virtual ~Chunk();
 
-    bool isSolidTile(int r, int c) {
+    bool isSolidTile(int r, int c) const {
         if (r < 0 || r >= CHUNK_SIZE || c < 0 || c >= CHUNK_SIZE)
             return false;
 
-        Tile tile = data[r * CHUNK_SIZE + c];
-        return tile == Tile::Cobble;
+        // Tile-level solidity
+        if (data[r * CHUNK_SIZE + c] == Tile::Cobble)
+            return true;
+
+        // Static objects
+        for (auto const& obj : objects) {
+            sf::Vector2i start = obj.origin;
+            sf::Vector2i end = obj.origin + obj.size;
+            if (c >= start.x && c < end.x && r >= start.y && r < end.y && obj.solid)
+                return true;
+        }
+        return false;
     }
 
     bool isPassableTile(int r, int c) {
@@ -56,27 +68,28 @@ public:
         return sf::FloatRect({offset.x, offset.y}, {size, size});
     }
 
-    [[nodiscard]] bool load() {
-        auto path = getFile();
-        std::ifstream file(path, std::ios::binary);
-        if (!file) {
-            std::cout << "[world] chunk " << path << " does not exist on disk. generating... " << std::endl;
-            return false;
-        }
-
-        file.read(reinterpret_cast<char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
-        build();
-
-        std::cout << "[world] loaded chunk " << path << std::endl;
-        return file.good();
-    }
-
+    bool load();
     bool save() {
         auto path = getFile();
         std::ofstream file(path, std::ios::binary);
         if (!file) return false;
 
         file.write(reinterpret_cast<const char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
+
+        uint32_t count = static_cast<uint32_t>(objects.size());
+        file.write(reinterpret_cast<const char*>(&count), sizeof(count));
+
+        // write each object
+        for (auto const& obj : objects) {
+            file.write(reinterpret_cast<const char*>(&obj.type), sizeof(obj.type));
+            file.write(reinterpret_cast<const char*>(&obj.origin), sizeof(obj.origin));
+            file.write(reinterpret_cast<const char*>(&obj.size), sizeof(obj.size));
+            file.write(reinterpret_cast<const char*>(&obj.solid), sizeof(obj.solid));
+            file.write(reinterpret_cast<const char*>(&obj.emit), sizeof(obj.emit));
+            file.write(reinterpret_cast<const char*>(&obj.light_radius), sizeof(obj.light_radius));
+            file.write(reinterpret_cast<const char*>(&obj.atlas_rect), sizeof(obj.atlas_rect));
+        }
+
         std::cout << "[world] saved chunk " << path << " onto disk" << std::endl;
         return true;
     }
@@ -89,8 +102,13 @@ public:
         oss << "save/" << std::hex << code << ".bin";
         return oss.str();
     }
-    void update_tile(int r, int c, Tile new_tile);
 
+    void update_tile(int r, int c, Tile new_tile);
+    void placeStatic(StaticObjectType type, sf::Vector2i worldTile, sf::Vector2i size, bool solid, bool emit, float light_radius);
+    bool breakStatic(sf::Vector2i ctile);
+    void rebuildStaticVerts();
+
+    void collectLights(std::vector<StaticObject*>& lightsOut);
     bool isDirty() const { return dirty; }
     void tidy() { dirty = false; }
 private:
@@ -115,6 +133,9 @@ private:
     bool dirty{false};
     std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> data;
     sf::VertexArray vertices;
-
+    sf::VertexArray static_vertices;
+    std::vector<StaticObject> objects;
+    std::shared_ptr<sf::Texture> object_atlas;
+    bool init{false};
     sf::RectangleShape border;
 };

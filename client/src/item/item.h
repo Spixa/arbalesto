@@ -11,7 +11,7 @@ enum class ItemType: uint8_t {
     EmeraldSword = 5,
     AmethystSword = 6,
     Bow = 7,
-    Bow2 = 8,
+    Flintlock = 8,
     Arrow = 9,
     HealthPotion = 14,
 };

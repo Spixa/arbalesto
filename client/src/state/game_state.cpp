@@ -8,9 +8,28 @@
 
 #include "../entity/itemstack.h"
 
+inline std::string colorize_demo(const std::string &input) {
+    const std::string hexSymbols = "0123456789abcdef";
+    std::string output;
+    int index = 0;
+
+    for (char c : input) {
+        if (std::isspace(static_cast<unsigned char>(c))) {
+            output.push_back(c); // keep whitespace unchanged
+        } else {
+            output += "&";
+            output += hexSymbols[index % hexSymbols.size()];
+            output.push_back(c);
+            index++;
+        }
+    }
+    return output;
+}
+
 GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 26}, chat_box{Game::getInstance()->getFallbackFont()} {
 
     world.addEntity(std::make_unique<ControllingPlayer>());
+    world.getPlayer()->setPosition(world.tileToWorldCoords({-7, 14}));
 
     sf::FloatRect ui = Game::getInstance()->getUIBounds();
 
@@ -23,10 +42,15 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
     });
 
     chat_text.setSize({ui.size.x, 30.f});
+
     chat_text.setSubmitCallback([this](const sf::String& msg) {
+        auto name = Game::getInstance()->getUsername();
         if (!msg.isEmpty()) {
             if (msg[0] != '/') {
-                chat_box.push("&7[&dDemo&7] &6Player &2> &f" + msg);
+                if (name)
+                    chat_box.push("&7[&aMember&7] &f" + name.value() + " &2> &f" + msg);
+                else
+                    chat_box.push("&cHey! &7Sorry, but an internal error denies you from sending a message");
             } else {
                 chat_box.push("&cHey! &7Sorry, but that feature is unimplemented");
             }
@@ -37,7 +61,7 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
     });
     chat_box.push("&6Welcome to &dArbalesto&6. You have &c10 &6seconds of grace!");
     chat_box.push("&6Move with &cWASD&6. Look around with &cMouse &6and shoot");
-    chat_box.push("&6with &cLMB. Chat with &cT &6and emplace a lightsource with &cF");
+    chat_box.push("&6with &cLMB&6. Chat with &cT &6and emplace a lightsource with &cF");
 }
 
 GameState::~GameState() {
@@ -69,9 +93,15 @@ void GameState::update(sf::Time dt) {
     // Apply zoom to view
     view.setSize(original * zoom);
 
+    int behind = -1;
     while (accu >= FIXED_DT) {
         world.update_tick(dt);
         accu -= FIXED_DT;
+        behind++;
+    }
+
+    if (behind > 100) {
+        Game::getInstance()->sendWarning("More than 100 ticks behind! (5 seconds)");
     }
 }
 
@@ -87,14 +117,6 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
         }
     }
     if (const auto* key = e->getIf<sf::Event::KeyPressed>()) {
-        if (key->code == sf::Keyboard::Key::F && !chat_text.isFocused()) {
-            world.addLight(
-                world.worldToTileCoords(world.getPlayer()->getPosition()),
-                12.f,
-                sf::Color::Yellow
-            );
-        }
-
         if (key->code == sf::Keyboard::Key::T && !chat_text.isFocused()) {
             chat_text.setFocused(true);
             g->pushFocus(UIWidget::CHAT);
@@ -103,16 +125,16 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
             return;
         }
 
-        if (key->code == sf::Keyboard::Key::G && !chat_text.isFocused()) {
-            sf::Vector2f center = world.getPlayer()->getPosition();
-            int count = 8;
-            float radius = 200;
-            for (int i = 0; i < count; ++i) {
-                float angle = 2.f * 3.14159265f * i / count; // angle in radians
-                sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
-                world.addEntity(std::make_unique<AiPlayer>(pos));
-            }
-        }
+        // if (key->code == sf::Keyboard::Key::G && !chat_text.isFocused()) {
+        //     sf::Vector2f center = world.getPlayer()->getPosition();
+        //     int count = 8;
+        //     float radius = 200;
+        //     for (int i = 0; i < count; ++i) {
+        //         float angle = 2.f * 3.14159265f * i / count; // angle in radians
+        //         sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
+        //         world.addEntity(std::make_unique<AiPlayer>(pos));
+        //     }
+        // }
 
         if (key->code == sf::Keyboard::Key::Slash && !chat_text.isFocused()) {
             chat_text.setFocused(true);

@@ -3,13 +3,14 @@
 #include "arrow.h"
 #include "../item/sword.h"
 #include "../item/bow.h"
+#include "../item/flintlock.h"
 
 #include <cmath>
 
 Player::Player(ItemType holding_stuff, sf::Vector2f spawn, float health) : Entity(next(), EntityType::PlayerEntity, health),
     sprite("player", {4,5}, 0.1), displayname(Game::getInstance()->getFallbackFont())
 {
-    if (holding_stuff == ItemType::Bow) holding = std::make_unique<Bow>();
+    if (holding_stuff == ItemType::Bow) holding = std::make_unique<Flintlock>();
     else holding = std::make_unique<Sword>();
     setPosition(spawn);
 
@@ -210,24 +211,35 @@ void ControllingPlayer::update_derived(sf::Time elapsed) {
 
         bool facing_left = (mouse_world.x < player_pos.x);
 
-        if (holding->getType() == ItemType::Bow) {
-            sf::Vector2f la;
-            if (looking_at.length() != 0.f)
-                la = looking_at.normalized();
-            sf::Angle rotation = sf::radians(std::atan2(la.y, la.x)) + sf::degrees(-135);
+        sf::Vector2f la;
+        if (looking_at.length() != 0.f) la = looking_at.normalized();
+        sf::Angle rotation = sf::radians(std::atan2(la.y, la.x)) + sf::degrees(-135);
 
-            if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && arrow_cooldown.getElapsedTime() >= sf::seconds(0.125)) {
-                arrow_cooldown.restart();
-                auto arrow_ptr = std::make_unique<Arrow>(player_pos, looking_at, 300.f, sf::seconds(5.f), getId());
-                // do stuff on the arrow here
-                // end of stuff done on arrow
-                Game::getInstance()->getWorld()->addEntity(std::unique_ptr<Entity>(std::move(arrow_ptr)));
+        switch (holding->getType()) {
+            case ItemType::Bow: {
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && arrow_cooldown.getElapsedTime() >= sf::seconds(0.125)) {
+                    arrow_cooldown.restart();
+                    auto arrow_ptr = std::make_unique<Arrow>(player_pos, looking_at, 300.f, sf::seconds(5.f), getId());
+                    Game::getInstance()->getWorld()->addEntity(std::unique_ptr<Entity>(std::move(arrow_ptr)));
+                }
+
+                holding->setRotation(rotation);
+                holding->update(elapsed, false); // bow is full normal rotation, no horizantal
+            } break;
+            case ItemType::Flintlock: {
+                holding->setRotation(rotation + sf::degrees(135));
+
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && arrow_cooldown.getElapsedTime() >= sf::seconds(.5f)) {
+                    arrow_cooldown.restart();
+
+                    Game::getInstance()->getWorld()->burstSmoke(getPosition(), 40, !facing_left);
+                }
+
+                holding->update(elapsed, !facing_left); // bow is full normal rotation, no horizantal
+            } break;
+            default: {
+                holding->update(elapsed, !facing_left); // other items rotate only rotate horizantally
             }
-
-            holding->setRotation(rotation);
-            holding->update(elapsed, false); // bow is full normal rotation, no horizantal
-        } else {
-            holding->update(elapsed, !facing_left); // other items rotate only rotate horizantally
         }
     }
 }

@@ -3,13 +3,15 @@
 #include "item.h"
 #include "../game.h"
 
-class Bow : public Item {
+class Flintlock : public Item {
 public:
-    Bow() : Item(ItemType::Bow) {
+    Flintlock() : Item(ItemType::Flintlock) {
         item_display.setOrigin({8, 8});
+        setPosition({0, 3});
+        setScale({1, 1});
     }
 
-    virtual ~Bow() {}
+    virtual ~Flintlock() {}
 
     void onLMB() override {
 

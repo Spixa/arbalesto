@@ -3,6 +3,7 @@
 #include "entity.h"
 #include "../animation/sprite.h"
 #include "../item/item.h"
+#include "../particle/smokesystem.h"
 
 class Player : public Entity {
 public:
@@ -17,7 +18,7 @@ public:
     void setHolding(std::unique_ptr<Item> item) {
         holding = std::move(item);
     }
-
+    bool isLeft() const { return inv; }
     void setDisplayname(sf::String const& dname) { displayname.setString(dname); }
     void pickup(ItemType type);
     sf::FloatRect getBounds() override { return sprite.getGlobalBounds(getTransform()); }

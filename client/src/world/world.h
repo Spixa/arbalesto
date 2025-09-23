@@ -5,6 +5,7 @@
 #include "../entity/entity.h"
 #include "chunk.h"
 #include "lighting.h"
+#include "../particle/smokesystem.h"
 
 class Player;
 class World : public sf::Drawable, public sf::Transformable {
@@ -14,7 +15,8 @@ public:
 
     void addEntity(std::unique_ptr<Entity> entity);
     void addLight(sf::Vector2i at, float r, sf::Color col);
-    Entity* getPlayer();
+    void burstSmoke(sf::Vector2f const& wcoords, int count, bool left);
+    Player* getPlayer();
     Player* getNearestEntity(Entity* from);
     bool isPassableAt(sf::Vector2f pos, sf::Vector2f size) const;
     sf::Color getAmbientLight() const;
@@ -34,7 +36,7 @@ public:
     void update_tick(sf::Time elapsed);
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;
-    void draw_lighting(sf::RenderTarget&) const;
+    void draw_lighting(sf::RenderTarget&, sf::FloatRect const& viewRect) const;
 private:
     void spawn_loot(); // expensive
     void check_collisions(); // optimized
@@ -48,7 +50,8 @@ private:
     mutable sf::RenderTexture lightmap; // because ::draw() is const
     std::unordered_map<sf::Vector2i, LightTile, arb::Vector2iHash> lightmap_tiles;
 
-    Entity* player;
+    Player* player;
+    SmokeSystem smoke;
     sf::RectangleShape tile_highlight;
     sf::Clock chunk_idle{};
     std::vector<Chunk*> chunk;

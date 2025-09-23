@@ -9,8 +9,10 @@ add_executable(Arbalesto
   src/entity/arrow.cpp
   src/entity/itemstack.cpp
   src/animation/sprite.cpp
+  src/particle/smokesystem.cpp
   src/world/chunk.cpp
   src/world/world.cpp
+  src/world/static.cpp
   src/item/item.cpp
   src/gui/textedit.cpp
   src/gui/chatbox.cpp

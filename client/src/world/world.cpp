@@ -117,6 +117,7 @@ World::World(std::string const& name) : name(name) {
     }
 
     spawn_loot();
+    rebakeLighting();
 }
 
 World::~World() {
@@ -125,12 +126,12 @@ World::~World() {
 
 void World::addEntity(std::unique_ptr<Entity> entity) {
     if (dynamic_cast<ControllingPlayer*>(entity.get()))
-        player = entity.get();
+        player = dynamic_cast<Player*>(entity.get());
 
     entities.push_back(std::move(entity));
 }
 
-Entity* World::getPlayer() {
+Player* World::getPlayer() {
     return player;
 }
 
@@ -174,6 +175,10 @@ bool World::isSolidTile(sf::Vector2i const& pos) const {
     return false;
 }
 
+void World::burstSmoke(sf::Vector2f const& wcoords, int count, bool left) {
+    smoke.spawnBurst(wcoords, count, left);
+}
+
 
 bool World::isPassableAt(sf::Vector2f pos, sf::Vector2f size) const {
     // determine the AABB corners of the entity
@@ -214,8 +219,6 @@ bool World::isPassableAt(sf::Vector2f pos, sf::Vector2f size) const {
 
 
 Player* World::getNearestEntity(Entity* from) {
-    if (grace.getElapsedTime().asSeconds() <= 10.f)
-        return nullptr;
     if (!from) return nullptr;
 
     Player* nearest = nullptr;
@@ -242,9 +245,7 @@ Player* World::getNearestEntity(Entity* from) {
 
 void World::update(sf::Time dt) {
     if (!player || !player->isAlive()) {
-        if (auto* p = dynamic_cast<Entity*>(entities[0].get())) {
-            player = p; // store non-owning pointer
-        }
+
     }
 
     // if (lights.size() > 0) lights[0].position = player->getPosition(); // follow player for test
@@ -254,14 +255,14 @@ void World::update(sf::Time dt) {
             x->update(dt);
     }
 
+    smoke.update(dt.asSeconds());
+
     check_collisions();
     entities.erase(
         std::remove_if(entities.begin(), entities.end(),
             [](auto& e){ return !e->isAlive(); }),
         entities.end()
     );
-
-    tile_highlight.setPosition(tileToWorldCoords(worldToTileCoords(Game::getInstance()->getMouseWorld())));
 
     if (!ctrl_dead) {
         Game::getInstance()->setInfo("Enemies: " + std::to_string((nmes - 1)));
@@ -301,6 +302,7 @@ void World::update_tick(sf::Time elapsed) {
     if (!pause_time)
         time = (time + 1 ) % DAY_LENGTH;
 
+    tile_highlight.setPosition(tileToWorldCoords(worldToTileCoords(Game::getInstance()->getMouseWorld())));
     for (auto& x : entities) {
         if (x && x->isAlive()) {
             x->update_tick(elapsed);
@@ -308,6 +310,7 @@ void World::update_tick(sf::Time elapsed) {
     }
 
     static Tile pref;
+    static bool place = true;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) {
         pref = Tile::Grass;
     }
@@ -318,6 +321,12 @@ void World::update_tick(sf::Time elapsed) {
         pref = Tile::Cobble;
     } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4)) {
         pref = Tile::Wood;
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::B)) {
+        place = false;
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::V)) {
+        place = true;
     }
 
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
@@ -396,11 +405,13 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         }
     }
 
-    draw_lighting(target);
+    draw_lighting(target, viewRect);
+    target.draw(smoke, states);
+
     target.draw(tile_highlight);
 }
 
-void World::draw_lighting(sf::RenderTarget& target) const {
+void World::draw_lighting(sf::RenderTarget& target, sf::FloatRect const& viewRect) const {
     lightmap.setView(target.getView());
     lightmap.clear(getAmbientLight());
 
@@ -410,7 +421,13 @@ void World::draw_lighting(sf::RenderTarget& target) const {
 
         float x = pos.x * TILE_SIZE;
         float y = pos.y * TILE_SIZE;
-        sf::Color c(255, 255, 200, std::clamp((int)(lt.intensity*20.f), 0, 255));
+
+        // Cull tile if outside viewRect
+        sf::FloatRect tileBounds({x, y}, {TILE_SIZE, TILE_SIZE});
+        if (!::overlaps(viewRect, tileBounds))
+            continue;
+
+        sf::Color c(255, 255, 200, std::clamp((int)(lt.intensity * 20.f), 0, 255));
 
         // Two triangles per tile (6 vertices)
         lightVerts.append({{x, y}, c});
@@ -421,18 +438,20 @@ void World::draw_lighting(sf::RenderTarget& target) const {
         lightVerts.append({{x + TILE_SIZE, y + TILE_SIZE}, c});
         lightVerts.append({{x, y + TILE_SIZE}, c});
     }
+
     lightmap.draw(lightVerts, sf::BlendAdd);
     lightmap.display();
 
     sf::Sprite lm_sprite{lightmap.getTexture()};
     lm_sprite.setPosition(target.mapPixelToCoords({0, 0}));
     lm_sprite.setScale({
-        target.getView().getSize().x / (float)lightmap.getSize().x,
-        target.getView().getSize().y / (float)lightmap.getSize().y
+        target.getView().getSize().x / static_cast<float>(lightmap.getSize().x),
+        target.getView().getSize().y / static_cast<float>(lightmap.getSize().y)
     });
 
     target.draw(lm_sprite, sf::BlendMultiply);
 }
+
 
 void World::spawn_loot() {
     std::vector<sf::Vector2f> candid;
@@ -452,11 +471,10 @@ void World::spawn_loot() {
         }
     }
 
-
     std::random_device rd;
     std::mt19937 rng(rd());
     std::shuffle(candid.begin(), candid.end(), rng);
-    int num = std::min(15, (int) candid.size());
+    int num = std::min(50, (int) candid.size());
 
     for (int i = 0; i < num; ++i) {
         sf::Vector2f spawn = candid[i];
@@ -477,12 +495,31 @@ void World::addLight(sf::Vector2i at, float r, sf::Color col) {
 void World::rebakeLighting() {
     lightmap_tiles.clear();
 
+    std::vector<std::pair<sf::Vector2i,float>> lightsources;
+
+    for (auto& c : chunk) {
+        std::vector<StaticObject*> objectLights;
+        c->collectLights(objectLights);
+        for (auto* o : objectLights) {
+            sf::Vector2i worldTile = o->origin + sf::Vector2i{
+                static_cast<int>(c->getOffset().x / TILE_SIZE),
+                static_cast<int>(c->getOffset().y / TILE_SIZE)
+            };
+
+            lightsources.push_back({worldTile, o->light_radius});
+        }
+    }
+
     for (auto const& src : lights) {
+        lightsources.push_back({src.position, src.radius});
+    }
+
+    for (auto const& [tile, r] : lightsources) {
         std::queue<std::pair<sf::Vector2i, float>> q;
         std::unordered_map<sf::Vector2i, float, arb::Vector2iHash> visited;
 
-        q.push({src.position, src.radius});
-        visited[src.position] = src.radius;
+        q.push({tile, r});
+        visited[tile] = r;
 
         while (!q.empty()) {
             auto [pos, strength] = q.front();
@@ -495,7 +532,7 @@ void World::rebakeLighting() {
             auto& lt = lightmap_tiles[pos];
             lt.intensity = std::max(lt.intensity, strength);
 
-            static constexpr float decay = 1.f;
+            float decay = 1.f;
             float next_strength = strength - decay;
             if (next_strength <= 0.f) continue;
 
