@@ -41,6 +41,9 @@ void Player::pickup(ItemType type) {
         case ItemType::Bow: {
             setHolding(std::make_unique<Bow>());
         } break;
+        case ItemType::Flintlock: {
+            setHolding(std::make_unique<Flintlock>());
+        }
         case ItemType::HealthPotion: {
             heal();
         } break;
@@ -213,32 +216,16 @@ void ControllingPlayer::update_derived(sf::Time elapsed) {
 
         sf::Vector2f la;
         if (looking_at.length() != 0.f) la = looking_at.normalized();
-        sf::Angle rotation = sf::radians(std::atan2(la.y, la.x)) + sf::degrees(-135);
 
         switch (holding->getType()) {
             case ItemType::Bow: {
-                if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && arrow_cooldown.getElapsedTime() >= sf::seconds(0.125)) {
-                    arrow_cooldown.restart();
-                    auto arrow_ptr = std::make_unique<Arrow>(player_pos, looking_at, 300.f, sf::seconds(5.f), getId());
-                    Game::getInstance()->getWorld()->addEntity(std::unique_ptr<Entity>(std::move(arrow_ptr)));
-                }
-
-                holding->setRotation(rotation);
-                holding->update(elapsed, false); // bow is full normal rotation, no horizantal
+                holding->update(elapsed, false, la, this); // bow is full normal rotation, no horizantal
             } break;
             case ItemType::Flintlock: {
-                holding->setRotation(rotation + sf::degrees(135));
-
-                if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && arrow_cooldown.getElapsedTime() >= sf::seconds(.5f)) {
-                    arrow_cooldown.restart();
-
-                    Game::getInstance()->getWorld()->burstSmoke(getPosition(), 40, !facing_left);
-                }
-
-                holding->update(elapsed, !facing_left); // bow is full normal rotation, no horizantal
+                holding->update(elapsed, !facing_left, la, this); // bow is full normal rotation, no horizantal
             } break;
             default: {
-                holding->update(elapsed, !facing_left); // other items rotate only rotate horizantally
+                holding->update(elapsed, !facing_left, la, this); // other items rotate only rotate horizantally
             }
         }
     }
@@ -314,7 +301,7 @@ void AiPlayer::update_tick_derived(sf::Time dt) {
         // rotate to match the aiming direction
         sf::Angle rotation = sf::radians(std::atan2(holdingDirection.y, holdingDirection.x)) + sf::degrees(-135);
         holding->setRotation(rotation);
-        holding->update(dt, false); // no inversion as this is not a melee weapon
+        holding->update(dt, false, holdingDirection, this); // no inversion as this is not a melee weapon
 
         // shooting logic
         if (arrowCooldown.getElapsedTime() >= arrowInterval) {

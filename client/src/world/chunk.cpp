@@ -213,6 +213,9 @@ void Chunk::render(sf::RenderTarget& target) {
             case StaticObjectType::WoodenDoor: {
                 sprite.setTextureRect({{32, 0}, {32, 32}});
             } break;
+            case StaticObjectType::Fence: {
+                sprite.setTextureRect({{64, 0}, {32, 32}});
+            } break;
         }
 
         sprite.setPosition({

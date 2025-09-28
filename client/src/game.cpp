@@ -23,6 +23,8 @@ Game::Game()
     texture_man.get("arrow", "../res/entity/arrow/arrow.png");
     texture_man.get("obj_atlas", "../res/objects/atlas.png");
 
+    snd_man.get("flintlock_shoot", "../res/items/flintlock/shoot.ogg");
+
     fps.setOutlineColor(sf::Color::Black);
     fps.setOutlineThickness(2.f);
     fps.setStyle(sf::Text::Style::Bold);

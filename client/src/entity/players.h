@@ -39,7 +39,7 @@ protected:
 class AiPlayer : public Player {
 public:
     AiPlayer(sf::Vector2f spawn) : Player(ItemType::Bow, spawn) {
-
+        pickup(ItemType::Bow);
     }
 
     virtual ~AiPlayer() {}

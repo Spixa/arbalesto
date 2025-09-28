@@ -16,20 +16,23 @@ enum class ItemType: uint8_t {
     HealthPotion = 14,
 };
 
+class Entity;
 class Item : public sf::Drawable, public sf::Transformable {
 public:
     Item(ItemType type);
     virtual ~Item();
 
     ItemType getType() { return type;}
-    void update(sf::Time dt, bool facing);
+    void update(sf::Time dt, bool facing, sf::Vector2f const& dir, Entity* user);
     sf::FloatRect getLocalBounds() const { return item_display.getLocalBounds(); }
 protected:
-    virtual void update_derived(sf::Time dt, bool facing) {};
-    virtual void onRMB() {};
-    virtual void onLMB() {};
+    virtual void update_derived(sf::Time dt, bool facing, sf::Vector2f const& dir) {};
+    virtual void onRMB(sf::Vector2f const& dir, Entity* user) {};
+    virtual void onLMB(sf::Vector2f const& dir, Entity* user) {};
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;
     ItemType type;
+    sf::Clock cooldown;
+    float cd_secs;
     sf::Sprite item_display;
 };

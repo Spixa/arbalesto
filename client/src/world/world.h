@@ -28,6 +28,7 @@ public:
 
     void rebakeLighting(); // expensive
     TileRef resolve(sf::Vector2i const& wtile) const;
+    std::optional<sf::Vector2f> raycast(sf::Vector2f start, sf::Vector2f dir, float maxDist) const;
 public:
     std::string const& getName() { return name; }
 
@@ -64,6 +65,7 @@ private:
 
     // test minigame vars:
     int nmes;
+    sf::Vector2i old;
     bool ctrl_dead = false;
     bool restart_shoot = false;
     sf::Clock grace{};

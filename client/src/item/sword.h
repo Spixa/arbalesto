@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+class Entity;
 class Sword : public Item {
 public:
     Sword() : Item(ItemType::GoldSword) {
@@ -14,7 +15,7 @@ public:
 
     virtual ~Sword() {}
 
-    void update_derived(sf::Time dt, bool facing) override {
+    void update_derived(sf::Time dt, bool facing, sf::Vector2f const& dir) override {
         if (!swinging) return;
 
         if (facing) {
@@ -35,7 +36,7 @@ public:
         item_display.setRotation(angle);
     }
 protected:
-    void onLMB() override {
+    void onLMB(sf::Vector2f const& dir, Entity* user) override {
         if (!swinging) {
             swinging = true;
             angle = sf::degrees(-90);

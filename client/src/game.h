@@ -18,6 +18,7 @@ public:
     sf::RenderWindow& getWindow() { return window; }
     sf::View& getDefaultView() { return def_view; }
     ResourceManager<sf::Texture>& getTextureManager() { return texture_man; }
+    ResourceManager<sf::SoundBuffer>& getSoundManager() { return snd_man; }
     std::optional<std::string> getUsername() const { return username; }
     StateManager& getStateManager() { return state_man; }
     World* getWorld() { return state_man.getGameState()->getWorld(); }
@@ -73,6 +74,7 @@ private:
     StateManager state_man;
     ResourceManager<sf::Texture> texture_man;
     ResourceManager<sf::Font> font_man;
+    ResourceManager<sf::SoundBuffer> snd_man;
     sf::RenderWindow window;
     sf::View ui_view;
     sf::View def_view;

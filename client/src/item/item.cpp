@@ -14,7 +14,7 @@ sf::IntRect idx_to_rect(uint8_t index) {
     return sf::IntRect({x, y}, {tile_size, tile_size});
 }
 
-Item::Item(ItemType type) : type(type), item_display(*Game::getInstance()->getTextureManager().get("items")) {
+Item::Item(ItemType type) : type(type), item_display(*Game::getInstance()->getTextureManager().get("items")), cooldown{} {
     auto rect = idx_to_rect(static_cast<uint8_t>(type));
     item_display.setTextureRect(rect);
 }
@@ -30,14 +30,20 @@ void Item::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     target.draw(item_display, states);
 }
 
-void Item::update(sf::Time dt, bool facing) {
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
-        onRMB();
+void Item::update(sf::Time dt, bool facing, sf::Vector2f const& dir, Entity* user) {
+    if (cooldown.getElapsedTime() >= sf::seconds(cd_secs)) {
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+            onRMB(dir, user);
+            cooldown.restart();
+        }
 
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
-        onLMB();
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+            onLMB(dir, user);
+            cooldown.restart();
+        }
+    }
 
-    update_derived(dt, facing);
+    update_derived(dt, facing, dir);
 
     if (facing) {
         auto s = item_display.getScale();

@@ -243,12 +243,40 @@ Player* World::getNearestEntity(Entity* from) {
     return nearest; // nullptr if no other AI exists
 }
 
+std::optional<sf::Vector2f> World::raycast(sf::Vector2f start, sf::Vector2f dir, float maxDist) const {
+    // Normalize direction
+    float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+    if (len == 0.f) return std::nullopt;
+    sf::Vector2f ndir = dir / len;
+
+    // Step size in world units
+    float step = TILE_SIZE / 4.f; // finer steps = more precise
+    sf::Vector2f pos = start;
+
+    float dist = 0.f;
+    while (dist < maxDist) {
+        sf::Vector2i tile = worldToTileCoords(pos);
+        if (isSolidTile(tile)) {
+            return pos; // hit!
+        }
+
+        pos += ndir * step;
+        dist += step;
+    }
+    return std::nullopt; // no hit
+}
+
+
 void World::update(sf::Time dt) {
+    auto new_ = worldToTileCoords(player->getPosition());
+    lights[0].position = new_; // follow player for test TODO: fix this so it doesnt have to bake everytime but also does actually bake
+    if (old != new_) {
+        rebakeLighting();
+    }
+
     if (!player || !player->isAlive()) {
 
     }
-
-    // if (lights.size() > 0) lights[0].position = player->getPosition(); // follow player for test
 
     for (auto& x : entities) {
         if (x && x->isAlive())
@@ -279,6 +307,7 @@ void World::update(sf::Time dt) {
             Game::getInstance()->setInfo("this AI is the fittest and/or the luckiest. It has claimed victory");
         }
     }
+    old = new_;
 }
 
 sf::String World::getTimeOfDay() const {
@@ -342,6 +371,12 @@ void World::update_tick(sf::Time elapsed) {
                 int cY = static_cast<int>(local.y / TILE_SIZE);
 
                 c->update_tile(cY, cX, pref);
+
+                if (place) {
+                    c->placeStatic(StaticObjectType::Fence, worldToTileCoords(mouse), {1, 1}, false, false, 0.f);
+                } else {
+                    c->breakStatic({cX, cY});
+                }
                 break; // stop after the first matching chunk
             }
         }

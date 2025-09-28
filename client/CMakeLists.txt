@@ -14,6 +14,8 @@ add_executable(Arbalesto
   src/world/world.cpp
   src/world/static.cpp
   src/item/item.cpp
+  src/item/bow.cpp
+  src/item/flintlock.cpp
   src/gui/textedit.cpp
   src/gui/chatbox.cpp
   src/gui/warning.cpp
@@ -25,6 +27,7 @@ target_link_libraries(${PROJECT_NAME}
     arbalesto_shared
     SFML::Graphics
     SFML::Window
+    SFML::Audio
     SFML::System
     magic_enum::magic_enum
 )

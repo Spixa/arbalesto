@@ -5,7 +5,8 @@
 enum class StaticObjectType: uint16_t {
     Torch,
     WoodenDoor,
-    Tree
+    Tree,
+    Fence
 };
 
 struct StaticObject {
