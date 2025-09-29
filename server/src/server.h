@@ -22,6 +22,7 @@ inline sf::Vector2i worldToChunkCoords(sf::Vector2f pos) {
 class Server {
     sf::UdpSocket sock;
     uint16_t next_seq{1};
+    uint32_t next_id{1};
     std::unordered_map<uint32_t, PlayerState> players;
     std::unordered_map<uint32_t, Remote> remotes;
 public:
@@ -30,4 +31,8 @@ public:
 private:
     void sync(Remote& remote);
     void update();
+    void recv();
+private:
+    const int TPS = 20;
+    const float TICK_SECS = 1000.f / TPS;
 };

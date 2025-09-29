@@ -15,12 +15,6 @@ void Flintlock::onLMB(sf::Vector2f const& dir, Entity* user) {
     w->burstSmoke(user->getPosition() + dir * 8.f, 40, dir.x > 0);
     if (hit) {
         w->burstSmoke(*hit, 25.f, dir.x > 0);
-        auto t = w->worldToTileCoords(*hit); // clip into wall
-        auto tr = w->resolve(t);
-        if (tr.valid()) {
-            tr.chunk->update_tile(tr.ly, tr.lx, Tile::Grass);
-            w->rebakeLighting();
-        }
     }
 }
 

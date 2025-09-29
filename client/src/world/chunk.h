@@ -7,6 +7,22 @@
 #include "static.h"
 
 constexpr uint8_t CHUNK_SIZE = 16;
+constexpr float TILE_SIZE = 32.f;
+
+class TileHighlight : public sf::Drawable, public sf::Transformable {
+    sf::RectangleShape rect;
+    sf::Text pos_text;
+public:
+    TileHighlight(sf::Font& font);
+
+    void update(sf::Vector2f mouse);
+protected:
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
+        states.transform *= getTransform();
+        target.draw(rect, states);
+        target.draw(pos_text, states);
+    }
+};
 
 enum class Tile: uint32_t {
     Grass = 0,
@@ -14,8 +30,6 @@ enum class Tile: uint32_t {
     Wood = 2,
     Cobble = 3,
 };
-
-constexpr float TILE_SIZE = 32.f;
 
 class Chunk;
 struct TileRef {

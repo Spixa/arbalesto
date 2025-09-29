@@ -7,7 +7,7 @@ class Entity;
 class Flintlock : public Item {
 public:
     Flintlock() : Item(ItemType::Flintlock), shoot(Game::getInstance()->getSoundManager().get("flintlock_shoot")), shooting_sound(*shoot) {
-        cd_secs = 0.1f;
+        cd_secs = 1.f;
         item_display.setOrigin({8, 8});
         setPosition({0, 3});
         setScale({1, 1});

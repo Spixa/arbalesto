@@ -80,15 +80,10 @@ namespace {
 }
 
 
-World::World(std::string const& name) : name(name) {
+World::World(std::string const& name) : name(name), tile_highlight(Game::getInstance()->getFallbackFont()) {
     entities.reserve(1000); // TODO FIX: this is a temporary solution I need to fully move to Id's instead of ptrs and weak ptrs
     light_tex = ::generateRadialGradient(256);
     lightmap = sf::RenderTexture(Game::getInstance()->getWindow().getSize());
-
-    tile_highlight.setSize({TILE_SIZE, TILE_SIZE});
-    tile_highlight.setFillColor(sf::Color::Transparent);
-    tile_highlight.setOutlineColor(sf::Color::Yellow);
-    tile_highlight.setOutlineThickness(.7f);
 
     for (int y = -2; y <= 2; ++y) {
         for (int x = -2; x <= 2; ++x) {
@@ -277,7 +272,7 @@ void World::update(sf::Time dt) {
     if (!player || !player->isAlive()) {
 
     }
-
+    tile_highlight.update(Game::getInstance()->getMouseWorld());
     for (auto& x : entities) {
         if (x && x->isAlive())
             x->update(dt);
@@ -331,7 +326,6 @@ void World::update_tick(sf::Time elapsed) {
     if (!pause_time)
         time = (time + 1 ) % DAY_LENGTH;
 
-    tile_highlight.setPosition(tileToWorldCoords(worldToTileCoords(Game::getInstance()->getMouseWorld())));
     for (auto& x : entities) {
         if (x && x->isAlive()) {
             x->update_tick(elapsed);

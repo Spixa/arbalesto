@@ -4,6 +4,7 @@
 enum class PacketType : uint8_t {
     JoinRequest,
     JoinAccept,
+    Input,
     Snapshot,
     Shoot,
     Place,
@@ -20,7 +21,6 @@ struct PacketHeader {
 
 struct PlayerState {
     uint32_t id;
-
     sf::Vector2f pos;
     sf::Vector2f vel;
     std::string uname;

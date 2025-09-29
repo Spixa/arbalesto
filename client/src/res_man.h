@@ -56,7 +56,7 @@ public:
         if (!resource->openFromFile(filename)) {
             throw std::runtime_error("Failed to open font: " + filename);
         }
-
+        resource->setSmooth(true);
         resources[id] = resource;
         return resource;
     }

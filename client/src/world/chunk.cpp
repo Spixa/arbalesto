@@ -2,6 +2,31 @@
 #include "../game.h"
 
 #include <cmath>
+#include "magic_enum.hpp"
+
+TileHighlight::TileHighlight(sf::Font& font) : pos_text(font) {
+    rect.setSize({TILE_SIZE, TILE_SIZE});
+    rect.setFillColor(sf::Color::Transparent);
+    rect.setOutlineColor(sf::Color::Yellow);
+    rect.setOutlineThickness(.7f);
+
+    pos_text.setCharacterSize(72.f);
+    pos_text.setFillColor(sf::Color::Yellow);
+    pos_text.setPosition({0, -12});
+    pos_text.setScale({0.125, 0.125});
+}
+
+void TileHighlight::update(sf::Vector2f mouse) {
+    auto w = Game::getInstance()->getWorld();
+    auto wt = w->worldToTileCoords(mouse);
+    setPosition(w->tileToWorldCoords(wt));
+
+    std::stringstream ss;
+    auto t = w->resolve(wt);
+    if (t.valid())
+        ss << "(" << wt.x << ", " << wt.y << ") " << magic_enum::enum_name(t.chunk->getTile(t.ly, t.lx));
+    pos_text.setString(ss.str());
+}
 
 Chunk::Chunk(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> const& data, sf::Vector2i pos)
     : data(data), tilesheet(Game::getInstance()->getTextureManager().get("tilesheet")), pos(pos), object_atlas(Game::getInstance()->getTextureManager().get("obj_atlas"))
