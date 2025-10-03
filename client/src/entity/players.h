@@ -5,6 +5,7 @@
 #include "../item/item.h"
 #include "../particle/smokesystem.h"
 
+#include "../net.h"
 class Player : public Entity {
 public:
     Player(ItemType holding, sf::Vector2f spawn, float health = 100.f);
@@ -22,6 +23,17 @@ public:
     void setDisplayname(sf::String const& dname) { displayname.setString(dname); }
     void pickup(ItemType type);
     sf::FloatRect getBounds() override { return sprite.getGlobalBounds(getTransform()); }
+
+    void setVelocity(sf::Vector2f const& v) { velocity = v; }
+    sf::Vector2f getVelocity() const { return velocity; }
+    float getItemRotation() const {
+        if (holding) return holding->getRotation().asRadians();
+        return 0.f;
+    }
+    ItemType getHoldingType() const {
+        if (holding) return holding->getType();
+        return ItemType::Bow;
+    }
 protected:
     void draw(sf::RenderTarget&, sf::RenderStates) const override;
 protected:
@@ -34,6 +46,24 @@ protected:
     bool inv;
     bool arrow{false};
     sf::Clock arrow_cooldown;
+};
+
+class RemotePlayer : public Player {
+public:
+    RemotePlayer(PlayerState const& init);
+
+    void update_derived(sf::Time dt) override;
+    void setTarget(sf::Vector2f const& tpos, sf::Vector2f const& tvel, float trot, uint16_t titem);
+
+private:
+    PlayerState state;
+    sf::Vector2f target;
+    sf::Vector2f predicted_pos;
+    sf::Vector2f last_predicted_pos, last_velocity;
+    std::chrono::steady_clock::time_point last_seen;
+
+    float target_rotation = 0.f;
+    uint16_t target_item = 0;
 };
 
 class AiPlayer : public Player {

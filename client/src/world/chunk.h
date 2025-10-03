@@ -104,7 +104,6 @@ public:
             file.write(reinterpret_cast<const char*>(&obj.atlas_rect), sizeof(obj.atlas_rect));
         }
 
-        std::cout << "[world] saved chunk " << path << " onto disk" << std::endl;
         return true;
     }
     void update_tick(sf::Vector2f mouse_coords, Tile selected);

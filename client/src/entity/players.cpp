@@ -94,10 +94,14 @@ void Player::update(sf::Time elapsed) {
         } break;
     }
 
-    if (velocity.length() == 0) {
-        sprite.setWalking(false);
-    } else {
+    const float minVel = 0.1f; // tweak as needed
+    if (velocity.length() > minVel) {
+        if (f != Facing::None) {
+            facing = f;
+        }
         sprite.setWalking(true);
+    } else {
+        sprite.setWalking(false);
     }
 
     displayname.setOrigin(displayname.getLocalBounds().size / 2.f);
@@ -189,8 +193,8 @@ ControllingPlayer::~ControllingPlayer() {
 }
 
 void ControllingPlayer::update_derived(sf::Time elapsed) {
-
-    if (Game::getInstance()->shouldWorldFocus())
+    bool f = Game::getInstance()->shouldWorldFocus();
+    if (f)
         velocity = sf::Vector2f{
             float(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)),
             float(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) - sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
@@ -207,7 +211,7 @@ void ControllingPlayer::update_derived(sf::Time elapsed) {
         velocity.y = velocity.y * speed;
     }
 
-    if (holding) {
+    if (holding && f) {
         sf::Vector2f player_pos = getPosition() + sf::Vector2f{0, 0};
         sf::Vector2f mouse_world = Game::getInstance()->getMouseWorld();
         sf::Vector2f looking_at = mouse_world - player_pos;
@@ -313,6 +317,79 @@ void AiPlayer::update_tick_derived(sf::Time dt) {
 
             float nextInterval = 0.006f + static_cast<float>(rand() % 500) / 1000.f; // between 0 and 2 seconds
             arrowInterval = sf::seconds(nextInterval);
+        }
+    }
+}
+
+using namespace std::chrono;
+
+RemotePlayer::RemotePlayer(PlayerState const& init)
+    : Player(ItemType::Bow, init.pos, 100.f),
+      state(init),
+      predicted_pos(init.pos),
+      last_predicted_pos(init.pos),
+      last_velocity({0.f, 0.f})
+{
+    setDisplayname(init.uname);
+    last_seen = std::chrono::steady_clock::now();
+    target = init.pos;
+
+    target_rotation = init.rotation;
+    target_item = init.held_item;
+}
+
+void RemotePlayer::setTarget(sf::Vector2f const& tpos, sf::Vector2f const& tvel, float trot, uint16_t titem) {
+    target = tpos;
+    last_velocity = tvel;
+    target_rotation = trot;
+    target_item = titem;
+
+    if (titem != target_item) {
+        target_item = titem;
+        ItemType item = static_cast<ItemType>(target_item);
+        pickup(item);
+    }
+}
+
+void RemotePlayer::update_derived(sf::Time dt) {
+    const float alpha = 0.08f;      // smoothing factor
+    const float prediction_factor = .5f;
+    // const float rot_alpha = 0.15f;
+
+    last_predicted_pos = predicted_pos;
+
+    // Predict forward using last known velocity if far from target
+    sf::Vector2f predicted = predicted_pos;
+    sf::Vector2f diff = target - predicted;
+
+    if (std::hypot(diff.x, diff.y) > 1.f) {
+        predicted += last_velocity * dt.asSeconds() * prediction_factor;
+    }
+
+    // Smooth interpolation toward server target
+    predicted_pos += (target - predicted_pos) * alpha;
+
+    // Velocity for animation
+    sf::Vector2f vel = predicted_pos - last_predicted_pos;
+    setVelocity(vel);
+
+    setPosition(predicted_pos);
+
+    auto current_rot = getRotation();
+    // auto new_rot = current_rot + (sf::radians(target_rotation) - current_rot) ;
+    auto new_rot = sf::radians(target_rotation);
+    if (holding) {
+        auto dir = sf::Vector2f{std::cos(new_rot.asRadians()), std::sin(new_rot.asRadians())};
+        bool left = dir.x > 0.f;
+        switch (holding->getType()) {
+            using IT = ItemType;
+            case IT::Flintlock: {
+                holding->update(dt, left, dir, this);
+                holding->setRotation(new_rot);
+            } break;
+            case IT::Bow: {
+                holding->update(dt, false, dir, this);
+            } break;
         }
     }
 }

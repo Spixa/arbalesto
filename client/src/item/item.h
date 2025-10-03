@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 
-enum class ItemType: uint8_t {
+enum class ItemType: uint16_t {
     WoodSword = 0,
     CopperSword = 1,
     IronSword = 2,

@@ -5,6 +5,7 @@
 #include "../item/sword.h"
 #include "../entity/itemstack.h"
 #include "../game.h"
+#include "../net.h"
 
 #include <algorithm>
 #include <random>
@@ -111,7 +112,7 @@ World::World(std::string const& name) : name(name), tile_highlight(Game::getInst
         }
     }
 
-    spawn_loot();
+    // spawn_loot();
     rebakeLighting();
 }
 
@@ -264,15 +265,40 @@ std::optional<sf::Vector2f> World::raycast(sf::Vector2f start, sf::Vector2f dir,
 
 void World::update(sf::Time dt) {
     auto new_ = worldToTileCoords(player->getPosition());
-    lights[0].position = new_; // follow player for test TODO: fix this so it doesnt have to bake everytime but also does actually bake
-    if (old != new_) {
-        rebakeLighting();
-    }
-
     if (!player || !player->isAlive()) {
 
     }
     tile_highlight.update(Game::getInstance()->getMouseWorld());
+
+    auto network = ClientNetwork::getInstance();
+
+
+    // spawn new RemotePlayers
+    for (auto const& [id, rp] : network->getPlayers()) {
+        if (id == network->getMyId()) continue;
+        if (remote_players.find(id) == remote_players.end()) {
+            auto player = std::make_unique<RemotePlayer>(rp.state);
+            addRemote(id, std::move(player));
+        }
+    }
+
+    // despawn removed RemotePlayers
+    // std::vector<uint32_t> to_remove;
+    // for (auto const& [id, player] : remote_players) {
+    //     if (network->getPlayers().find(id) == network->getPlayers().end()) {
+    //         to_remove.push_back(id);
+    //     }
+    // }
+    // for (auto id : to_remove) removeRemote(id);
+
+    // update targets (no interpolation here, interpolation happens per tick)
+    for (auto& [id, player] : remote_players) {
+        auto it = network->getPlayers().find(id);
+        if (it != network->getPlayers().end()) {
+            player->setTarget(it->second.state.pos, it->second.state.vel, it->second.state.rotation, it->second.state.held_item); // latest server snapshot
+        }
+    }
+
     for (auto& x : entities) {
         if (x && x->isAlive())
             x->update(dt);
@@ -286,23 +312,6 @@ void World::update(sf::Time dt) {
             [](auto& e){ return !e->isAlive(); }),
         entities.end()
     );
-
-    if (!ctrl_dead) {
-        Game::getInstance()->setInfo("Enemies: " + std::to_string((nmes - 1)));
-
-        if (nmes == 1) {
-            Game::getInstance()->setInfo("You won");
-        }
-    } else {
-        Game::getInstance()->setInfo("You died\nYou are now spectating an AI with " + std::to_string((nmes - 1)) + " enemies");
-
-        if (nmes == 0) {
-            Game::getInstance()->setInfo("Very rare instance where everyone dies: Nobody wins!");
-        } else if (nmes == 1) {
-            Game::getInstance()->setInfo("this AI is the fittest and/or the luckiest. It has claimed victory");
-        }
-    }
-    old = new_;
 }
 
 sf::String World::getTimeOfDay() const {
@@ -315,10 +324,6 @@ sf::String World::getTimeOfDay() const {
     oss << std::setw(2) << std::setfill('0') << hours
         << ":"
         << std::setw(2) << std::setfill('0') << minutes;
-
-    sf::Vector2i pp = worldToTileCoords(player->getPosition());
-    oss << "\n(" << pp.x << ", " << pp.y << ")";
-
     return oss.str();
 }
 
@@ -331,6 +336,8 @@ void World::update_tick(sf::Time elapsed) {
             x->update_tick(elapsed);
         }
     }
+
+    ClientNetwork::getInstance()->syncInput(player->getVelocity(), player->getItemRotation(), (uint16_t) player->getHoldingType());
 
     static Tile pref;
     static bool place = true;
@@ -636,9 +643,8 @@ void World::check_collisions() {
             if (p->getId() == shooter) continue;
             if (::overlaps(ab, p->getBounds())) {
                 p->damage(10.f);
-                if (dynamic_cast<ControllingPlayer*>(p) && !p->isAlive() && !ctrl_dead) {
-                    ctrl_dead = true;
-                    Game::getInstance()->tell("&6Player &fwas slain by an arrow");
+                if (dynamic_cast<ControllingPlayer*>(p) && !p->isAlive()) {
+
                 }
                 arrow->die();
                 break;
@@ -657,9 +663,34 @@ void World::check_collisions() {
             }
         }
     }
-
-    nmes = players.size();
 }
+
+void World::addRemote(uint32_t id, std::unique_ptr<RemotePlayer> player) {
+    RemotePlayer* ptr = player.get();
+    remote_players[id] = ptr;
+    entities.push_back(std::move(player));
+}
+
+void World::removeRemote(uint32_t id) {
+    auto it = remote_players.find(id);
+    if (it != remote_players.end()) {
+        RemotePlayer* victim = it->second;
+        entities.erase(
+            std::remove_if(
+                entities.begin(),
+                entities.end(),
+                [&](const std::unique_ptr<Entity>& e) {
+                    return e.get() == victim;
+                }),
+            entities.end());
+
+        remote_players.erase(it);
+    }
+}
+
+
+
+
 sf::Color World::getAmbientLight() const {
     float t = static_cast<float>(time % DAY_LENGTH) / DAY_LENGTH; // 0..1
 

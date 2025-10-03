@@ -1,6 +1,8 @@
 #include <cinttypes>
 #include <SFML/Network.hpp>
 
+constexpr int TICKRATE = 50;
+
 enum class PacketType : uint8_t {
     JoinRequest,
     JoinAccept,
@@ -21,14 +23,16 @@ struct PacketHeader {
 
 struct PlayerState {
     uint32_t id;
+    std::string uname;
     sf::Vector2f pos;
     sf::Vector2f vel;
-    std::string uname;
+    uint16_t held_item = 0;
+    float rotation = 0.f;
+    std::chrono::steady_clock::time_point last_seen;
 };
-
 inline sf::Packet& operator <<(sf::Packet& p, PlayerState const& s) {
-    return p << s.id << s.pos.x << s.pos.y << s.vel.x << s.vel.y;
+    return p << s.id << s.uname << s.pos.x << s.pos.y << s.vel.x << s.vel.y << s.held_item << s.rotation;
 }
 inline sf::Packet& operator >>(sf::Packet& p, PlayerState& s) {
-    return p >> s.id >> s.pos.x >> s.pos.y >> s.vel.x >> s.vel.y;
+    return p >> s.id >> s.uname >> s.pos.x >> s.pos.y >> s.vel.x >> s.vel.y >> s.held_item >> s.rotation;
 }

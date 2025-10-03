@@ -6,12 +6,12 @@
 #include "../world/world.h"
 #include "../gui/textedit.h"
 #include "../gui/chatbox.h"
+#include "../net.h"
 
 #define info(x) std::cout << "[client] INFO > " << x << std::endl
 #define warn(x) std::cout << "[client] WARN > " << x << std::endl
 #define error(x) std::cout << "[client] ERROR > " << x << std::endl
 
-constexpr int TICKRATE = 20;
 constexpr float FIXED_DT = 1.0f / TICKRATE;
 
 class GameState : public State {

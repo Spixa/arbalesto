@@ -3,7 +3,7 @@
 #include "../game.h"
 #include <regex>
 
-MenuState::MenuState() : State("menu"), play("Play", Game::getInstance()->getFallbackFont(), {100, 300}), username("Username: ", Game::getInstance()->getFallbackFont(), 30) {
+MenuState::MenuState() : State("menu"), play("Play", Game::getInstance()->getFallbackFont(), {0, 0}), username("Username: ", Game::getInstance()->getFallbackFont(), 30) {
     username.setSubmitCallback([this](const sf::String& msg) {
         if (!msg.isEmpty()) {
             std::regex r("^[a-zA-Z0-9_]*$");
@@ -30,6 +30,11 @@ MenuState::MenuState() : State("menu"), play("Play", Game::getInstance()->getFal
     username.setPosition({
         ui.position.x + 5.f,
         ui.position.y + ui.size.y - username.getLocalBounds().size.y - padding
+    });
+
+    play.setPosition({
+        ui.position.x + 40.f,
+        ui.position.y + ui.size.y - 75
     });
 }
 

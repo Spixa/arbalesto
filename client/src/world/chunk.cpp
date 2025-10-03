@@ -54,7 +54,6 @@ bool Chunk::load() {
     auto path = getFile();
     std::ifstream file(path, std::ios::binary);
     if (!file) {
-        std::cout << "[world] chunk " << path << " does not exist on disk. generating... " << std::endl;
         return false;
     }
 
@@ -75,8 +74,6 @@ bool Chunk::load() {
             file.read(reinterpret_cast<char*>(&objects[i].atlas_rect), sizeof(objects[i].atlas_rect));
         }
     }
-
-    std::cout << "[world] loaded chunk " << path << std::endl;
     return file.good();
 }
 

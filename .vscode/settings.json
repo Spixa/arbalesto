@@ -93,6 +93,7 @@
         "stack": "cpp",
         "typeindex": "cpp",
         "valarray": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "stop_token": "cpp"
     }
 }

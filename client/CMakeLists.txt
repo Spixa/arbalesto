@@ -1,6 +1,7 @@
 add_executable(Arbalesto
   src/main.cpp
   src/game.cpp
+  src/net.cpp
   src/state/state_man.cpp
   src/state/game_state.cpp
   src/state/menu_state.cpp

@@ -29,8 +29,7 @@ inline std::string colorize_demo(const std::string &input) {
 GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 26}, chat_box{Game::getInstance()->getFallbackFont()} {
 
     world.addEntity(std::make_unique<ControllingPlayer>());
-    world.getPlayer()->setPosition(world.tileToWorldCoords({-7, 14}));
-    world.addLight({-7, 14}, 5.0, sf::Color::White);
+    world.addLight({0, 0}, 8.0, sf::Color::White);
     sf::FloatRect ui = Game::getInstance()->getUIBounds();
 
     float padding = 20.f;
@@ -46,22 +45,9 @@ GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game
     chat_text.setSubmitCallback([this](const sf::String& msg) {
         auto name = Game::getInstance()->getUsername();
         if (!msg.isEmpty()) {
-            if (msg[0] != '/') {
-                if (name)
-                    chat_box.push("&7[&aMember&7] &f" + name.value() + " &2> &f" + msg);
-                else
-                    chat_box.push("&cHey! &7Sorry, but an internal error denies you from sending a message");
-            } else {
-                chat_box.push("&cHey! &7Sorry, but that feature is unimplemented");
-            }
-        } else {
-            chat_box.push("&cHey! &7Sorry, but you can't send an empty message here");
-            Game::getInstance()->sendWarning("Shitty message");
+            if (name) ClientNetwork::getInstance()->chat(msg);
         }
     });
-    chat_box.push("&6Welcome to &dArbalesto&6. You have &c10 &6seconds of grace!");
-    chat_box.push("&6Move with &cWASD&6. Look around with &cMouse &6and shoot");
-    chat_box.push("&6with &cLMB&6. Chat with &cT &6and emplace a lightsource with &cF");
 }
 
 GameState::~GameState() {
@@ -71,6 +57,8 @@ GameState::~GameState() {
 void GameState::start() {
     info("Started game state");
     dynamic_cast<Player*>(world.getPlayer())->setDisplayname(Game::getInstance()->getUsername().value_or("[]"));
+
+    ClientNetwork::getInstance()->join(sf::IpAddress{127, 0, 0, 1}, 37549, Game::getInstance()->getUsername().value());
     view.setSize(Game::getInstance()->getDefaultView().getSize());
     original = view.getSize();
     zoom = 0.4f;
@@ -83,6 +71,7 @@ void GameState::update(sf::Time dt) {
     accu += dt.asSeconds();
 
     world.update(dt);
+    ClientNetwork::getInstance()->update(dt);
     chat_text.update();
     chat_box.update(dt, chat_text.isFocused());
     view.setCenter(world.getPlayer()->getPosition());

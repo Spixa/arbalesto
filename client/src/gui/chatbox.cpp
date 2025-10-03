@@ -67,7 +67,7 @@ ChatLine parse_from_str(sf::String const& raw, const sf::Font& font, unsigned in
 
 
 void ChatBox::push(sf::String const& raw) {
-    lines.push_back(parse_from_str(raw, font, 16.f));
+    lines.push_back(parse_from_str(raw, font, 23.f));
     if (lines.size() > max_lines) lines.pop_front();
 
     show_timer = visible_time;

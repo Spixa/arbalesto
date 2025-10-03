@@ -31,15 +31,17 @@ void Item::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 }
 
 void Item::update(sf::Time dt, bool facing, sf::Vector2f const& dir, Entity* user) {
-    if (cooldown.getElapsedTime() >= sf::seconds(cd_secs)) {
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-            onRMB(dir, user);
-            cooldown.restart();
-        }
+    if (dynamic_cast<ControllingPlayer*>(user)) {
+        if (cooldown.getElapsedTime() >= sf::seconds(cd_secs)) {
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+                onRMB(dir, user);
+                cooldown.restart();
+            }
 
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-            onLMB(dir, user);
-            cooldown.restart();
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+                onLMB(dir, user);
+                cooldown.restart();
+            }
         }
     }
 

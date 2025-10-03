@@ -8,6 +8,7 @@
 #include "../particle/smokesystem.h"
 
 class Player;
+class RemotePlayer;
 class World : public sf::Drawable, public sf::Transformable {
 public:
     World(std::string const& name);
@@ -29,6 +30,11 @@ public:
     void rebakeLighting(); // expensive
     TileRef resolve(sf::Vector2i const& wtile) const;
     std::optional<sf::Vector2f> raycast(sf::Vector2f start, sf::Vector2f dir, float maxDist) const;
+
+    std::vector<std::unique_ptr<Entity>>& getEntities();
+
+    void addRemote(uint32_t id, std::unique_ptr<RemotePlayer> player);
+    void removeRemote(uint32_t id);
 public:
     std::string const& getName() { return name; }
 
@@ -44,6 +50,7 @@ private:
     void save_dirty_chunks(); // expensive
 private:
     std::vector<std::unique_ptr<Entity>> entities{};
+    std::unordered_map<uint32_t, RemotePlayer*> remote_players;
 
     // lighting
     std::vector<TileLightSource> lights;
@@ -59,14 +66,7 @@ private:
     std::string name;
 
     // daynight cycle
-    uint64_t time = 20 * 60 * 15;
+    uint64_t time = 20 * 60 * 0;
     static constexpr uint64_t DAY_LENGTH = 60 * 20 * 60; // 60 minute for now
     bool pause_time = false;
-
-    // test minigame vars:
-    int nmes;
-    sf::Vector2i old;
-    bool ctrl_dead = false;
-    bool restart_shoot = false;
-    sf::Clock grace{};
 };
