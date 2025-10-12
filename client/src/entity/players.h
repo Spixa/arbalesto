@@ -66,25 +66,25 @@ private:
     uint16_t target_item = 0;
 };
 
-class AiPlayer : public Player {
-public:
-    AiPlayer(sf::Vector2f spawn) : Player(ItemType::Bow, spawn) {
-        pickup(ItemType::Bow);
-    }
+// class AiPlayer : public Player {
+// public:
+//     AiPlayer(sf::Vector2f spawn) : Player(ItemType::Bow, spawn) {
+//         pickup(ItemType::Bow);
+//     }
 
-    virtual ~AiPlayer() {}
+//     virtual ~AiPlayer() {}
 
-    void update_tick_derived(sf::Time dt) override;
-private:
-    sf::Clock decisionClock;
-    sf::Time decisionInterval;
+//     void update_tick_derived(sf::Time dt) override;
+// private:
+//     sf::Clock decisionClock;
+//     sf::Time decisionInterval;
 
-    sf::Time arrowInterval;
-    sf::Clock arrowCooldown;
+//     sf::Time arrowInterval;
+//     sf::Clock arrowCooldown;
 
-    Entity* currentTarget{nullptr};
-    sf::Vector2f holdingDirection = {1.f, 0.f};
-};
+//     Entity* currentTarget{nullptr};
+//     sf::Vector2f holdingDirection = {1.f, 0.f};
+// };
 
 class ControllingPlayer : public Player {
 public:

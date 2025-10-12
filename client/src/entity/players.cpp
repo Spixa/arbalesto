@@ -94,7 +94,7 @@ void Player::update(sf::Time elapsed) {
         } break;
     }
 
-    const float minVel = 0.1f; // tweak as needed
+    const float minVel = 0.0f; // tweak as needed
     if (velocity.length() > minVel) {
         if (f != Facing::None) {
             facing = f;
@@ -235,91 +235,91 @@ void ControllingPlayer::update_derived(sf::Time elapsed) {
     }
 }
 
-void AiPlayer::update_tick_derived(sf::Time dt) {
-    if (decisionClock.getElapsedTime() >= decisionInterval) {
-        decisionClock.restart();
+// void AiPlayer::update_tick_derived(sf::Time dt) {
+//     if (decisionClock.getElapsedTime() >= decisionInterval) {
+//         decisionClock.restart();
 
-        // 20% chance to idle
-        if (rand() % 5 == 0) {
-            velocity = {0.f, 0.f};
-        } else {
-            int dir = rand() % 8;
+//         // 20% chance to idle
+//         if (rand() % 5 == 0) {
+//             velocity = {0.f, 0.f};
+//         } else {
+//             int dir = rand() % 8;
 
-            switch (dir) {
-                case 0: velocity = {0.f, -1.f}; break;       // up
-                case 1: velocity = {1.f, -1.f}; break;       // up-right
-                case 2: velocity = {1.f, 0.f}; break;        // right
-                case 3: velocity = {1.f, 1.f}; break;        // down-right
-                case 4: velocity = {0.f, 1.f}; break;        // down
-                case 5: velocity = {-1.f, 1.f}; break;       // down-left
-                case 6: velocity = {-1.f, 0.f}; break;       // left
-                case 7: velocity = {-1.f, -1.f}; break;      // up-left
-            }
+//             switch (dir) {
+//                 case 0: velocity = {0.f, -1.f}; break;       // up
+//                 case 1: velocity = {1.f, -1.f}; break;       // up-right
+//                 case 2: velocity = {1.f, 0.f}; break;        // right
+//                 case 3: velocity = {1.f, 1.f}; break;        // down-right
+//                 case 4: velocity = {0.f, 1.f}; break;        // down
+//                 case 5: velocity = {-1.f, 1.f}; break;       // down-left
+//                 case 6: velocity = {-1.f, 0.f}; break;       // left
+//                 case 7: velocity = {-1.f, -1.f}; break;      // up-left
+//             }
 
-            if (velocity.x != 0 && velocity.y != 0)
-                velocity /= std::sqrt(2.f);
-        }
+//             if (velocity.x != 0 && velocity.y != 0)
+//                 velocity /= std::sqrt(2.f);
+//         }
 
-        float nextInterval = 1.f + static_cast<float>(rand() % 2000) / 1000.f;
-        decisionInterval = sf::seconds(nextInterval);
+//         float nextInterval = 1.f + static_cast<float>(rand() % 2000) / 1000.f;
+//         decisionInterval = sf::seconds(nextInterval);
 
-        constexpr float speed = 50.f;
-        velocity *= speed;
-    }
+//         constexpr float speed = 50.f;
+//         velocity *= speed;
+//     }
 
-    if (!currentTarget || !currentTarget->isAlive()) {
-        currentTarget = Game::getInstance()->getWorld()->getNearestEntity(this);
-    }
+//     if (!currentTarget || !currentTarget->isAlive()) {
+//         currentTarget = Game::getInstance()->getWorld()->getNearestEntity(this);
+//     }
 
-    if (currentTarget && holding && holding->getType() == ItemType::Bow) {
-        sf::Vector2f my_pos = getPosition();
-        sf::Vector2f target_pos = currentTarget->getPosition();
-        sf::Vector2f desiredDir = target_pos - my_pos;
+//     if (currentTarget && holding && holding->getType() == ItemType::Bow) {
+//         sf::Vector2f my_pos = getPosition();
+//         sf::Vector2f target_pos = currentTarget->getPosition();
+//         sf::Vector2f desiredDir = target_pos - my_pos;
 
-        if (desiredDir.x != 0.f || desiredDir.y != 0.f)
-            desiredDir /= std::sqrt(desiredDir.x*desiredDir.x + desiredDir.y*desiredDir.y);
+//         if (desiredDir.x != 0.f || desiredDir.y != 0.f)
+//             desiredDir /= std::sqrt(desiredDir.x*desiredDir.x + desiredDir.y*desiredDir.y);
 
-        // SMOOTH ROTATION IMPL
-        float rotationSpeed = 5.f; // radians per second
-        sf::Vector2f currentDir = holdingDirection; // AI stores current aiming direction
-        float dot = currentDir.x*desiredDir.x + currentDir.y*desiredDir.y;
-        dot = std::clamp(dot, -1.f, 1.f);
-        float angleDiff = std::acos(dot);
+//         // SMOOTH ROTATION IMPL
+//         float rotationSpeed = 5.f; // radians per second
+//         sf::Vector2f currentDir = holdingDirection; // AI stores current aiming direction
+//         float dot = currentDir.x*desiredDir.x + currentDir.y*desiredDir.y;
+//         dot = std::clamp(dot, -1.f, 1.f);
+//         float angleDiff = std::acos(dot);
 
-        // determine rotation direction using cross product
-        float cross = currentDir.x*desiredDir.y - currentDir.y*desiredDir.x;
-        if (angleDiff > 0.001f) {
-            float maxRotate = rotationSpeed * dt.asSeconds();
-            float rotateAmount = std::min(maxRotate, angleDiff);
-            if (cross < 0) rotateAmount = -rotateAmount;
+//         // determine rotation direction using cross product
+//         float cross = currentDir.x*desiredDir.y - currentDir.y*desiredDir.x;
+//         if (angleDiff > 0.001f) {
+//             float maxRotate = rotationSpeed * dt.asSeconds();
+//             float rotateAmount = std::min(maxRotate, angleDiff);
+//             if (cross < 0) rotateAmount = -rotateAmount;
 
-            float cosA = std::cos(rotateAmount);
-            float sinA = std::sin(rotateAmount);
-            sf::Vector2f newDir = {
-                currentDir.x * cosA - currentDir.y * sinA,
-                currentDir.x * sinA + currentDir.y * cosA
-            };
-            holdingDirection = newDir;
-        }
+//             float cosA = std::cos(rotateAmount);
+//             float sinA = std::sin(rotateAmount);
+//             sf::Vector2f newDir = {
+//                 currentDir.x * cosA - currentDir.y * sinA,
+//                 currentDir.x * sinA + currentDir.y * cosA
+//             };
+//             holdingDirection = newDir;
+//         }
 
-        // rotate to match the aiming direction
-        sf::Angle rotation = sf::radians(std::atan2(holdingDirection.y, holdingDirection.x)) + sf::degrees(-135);
-        holding->setRotation(rotation);
-        holding->update(dt, false, holdingDirection, this); // no inversion as this is not a melee weapon
+//         // rotate to match the aiming direction
+//         sf::Angle rotation = sf::radians(std::atan2(holdingDirection.y, holdingDirection.x)) + sf::degrees(-135);
+//         holding->setRotation(rotation);
+//         holding->update(dt, false, holdingDirection, this); // no inversion as this is not a melee weapon
 
-        // shooting logic
-        if (arrowCooldown.getElapsedTime() >= arrowInterval) {
-            arrowCooldown.restart();
-            float arrowSpeed = 300.f;
-            sf::Time arrowLifetime = sf::seconds(5.f);
-            auto arrow_ptr = std::make_unique<Arrow>(my_pos, holdingDirection, arrowSpeed, arrowLifetime, getId());
-            Game::getInstance()->getWorld()->addEntity(std::move(arrow_ptr));
+//         // shooting logic
+//         if (arrowCooldown.getElapsedTime() >= arrowInterval) {
+//             arrowCooldown.restart();
+//             float arrowSpeed = 300.f;
+//             sf::Time arrowLifetime = sf::seconds(5.f);
+//             auto arrow_ptr = std::make_unique<Arrow>(my_pos, holdingDirection, arrowSpeed, arrowLifetime, getId());
+//             Game::getInstance()->getWorld()->addEntity(std::move(arrow_ptr));
 
-            float nextInterval = 0.006f + static_cast<float>(rand() % 500) / 1000.f; // between 0 and 2 seconds
-            arrowInterval = sf::seconds(nextInterval);
-        }
-    }
-}
+//             float nextInterval = 0.006f + static_cast<float>(rand() % 500) / 1000.f; // between 0 and 2 seconds
+//             arrowInterval = sf::seconds(nextInterval);
+//         }
+//     }
+// }
 
 using namespace std::chrono;
 

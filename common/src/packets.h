@@ -1,5 +1,8 @@
+#pragma once
+
 #include <cinttypes>
 #include <SFML/Network.hpp>
+#include <cstring>
 
 constexpr int TICKRATE = 50;
 
@@ -11,15 +14,45 @@ enum class PacketType : uint8_t {
     Shoot,
     Place,
     Break,
+    ChunkRequest,
     ChunkData,
+    Teleport,
     ChatMessage,
     WarningMessage
 };
 
 struct PacketHeader {
-    uint16_t seq;
+    uint32_t seq;
     PacketType type;
 };
+
+inline sf::Packet& operator<<(sf::Packet& p, PacketHeader const& h) {
+    return p << h.seq << static_cast<uint8_t>(h.type);
+}
+inline sf::Packet& operator>>(sf::Packet& p, PacketHeader& h) {
+    uint8_t t;
+    p >> h.seq >> t;
+    h.type = static_cast<PacketType>(t);
+    return p;
+}
+
+constexpr uint8_t CHUNK_SIZE = 16;
+constexpr float TILE_SIZE = 32.f;
+enum class Tile: uint32_t {
+    Grass = 0,
+    Water = 1,
+    Wood = 2,
+    Cobble = 3,
+    Sand = 4,
+};
+
+struct NetChunk {
+    int32_t x, y;
+    std::array<Tile, CHUNK_SIZE * CHUNK_SIZE> tiles;
+
+    void serialize(sf::Packet& packet) const;
+};
+
 
 struct PlayerState {
     uint32_t id;

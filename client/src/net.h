@@ -16,6 +16,7 @@ public:
     void update(sf::Time elapsed);
     void chat(std::string const& msg);
     void syncInput(sf::Vector2f const& vel, float rot, uint16_t held);
+    void requestChunk(sf::Vector2i const& pos);
     const std::unordered_map<uint32_t, Remote>& getPlayers() const { return players; }
 
     uint32_t getMyId() const { return my_id; }
@@ -37,9 +38,10 @@ private:
     uint32_t my_id{0};
 
     std::unordered_map<uint32_t, Remote> players;
-    std::chrono::steady_clock::time_point start_time;
+    std::chrono::steady_clock::time_point start_time, last_snapshot;
     int ping_ms{0};
     uint32_t last_seq_seen;
+    uint32_t next_seq = 1;
 
     const float stale_timeout_secs = 2.5f;
     void proc_packets(sf::Packet& pkt, const sf::IpAddress& sender, unsigned short port);

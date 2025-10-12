@@ -10,6 +10,7 @@ FetchContent_MakeAvailable(spdlog)
 add_executable(arbalesto_server
     src/main.cpp
     src/server.cpp
+    src/generator.cpp
 )
 
 target_link_libraries(arbalesto_server

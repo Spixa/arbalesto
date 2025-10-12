@@ -86,32 +86,6 @@ World::World(std::string const& name) : name(name), tile_highlight(Game::getInst
     light_tex = ::generateRadialGradient(256);
     lightmap = sf::RenderTexture(Game::getInstance()->getWindow().getSize());
 
-    for (int y = -2; y <= 2; ++y) {
-        for (int x = -2; x <= 2; ++x) {
-            sf::Vector2i pos{x, y};
-            std::unique_ptr<Chunk> c;
-
-            // Try loading chunk from disk
-            Chunk temp({}, pos);
-            if (temp.load()) {
-                c = std::make_unique<Chunk>(temp);
-            } else {
-                // If not found, generate new
-                if (x >= -1 && x <= 1 && y >= -1 && y <= 1) {
-                    c = std::make_unique<Chunk>(std::array<Tile, CHUNK_SIZE*CHUNK_SIZE>{}, pos);
-                } else {
-                    std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> data{};
-                    data.fill(Tile::Water);
-                    c = std::make_unique<Chunk>(data, pos);
-                }
-
-                c->save();
-            }
-
-            chunk.push_back(c.release());
-        }
-    }
-
     // spawn_loot();
     rebakeLighting();
 }
@@ -147,9 +121,9 @@ sf::Vector2f World::tileToWorldCoords(const sf::Vector2i& tile) const {
 
 
 bool World::isValidTile(const sf::Vector2i& tile) const {
-    for (auto& c : chunk) {
-        int col = tile.x - static_cast<int>(c->getOffset().x / TILE_SIZE);
-        int row = tile.y - static_cast<int>(c->getOffset().y / TILE_SIZE);
+    for (auto& c : chunks) {
+        int col = tile.x - static_cast<int>(c.second->getOffset().x / TILE_SIZE);
+        int row = tile.y - static_cast<int>(c.second->getOffset().y / TILE_SIZE);
         if (row >= 0 && row < CHUNK_SIZE && col >= 0 && col < CHUNK_SIZE)
             return true;
     }
@@ -157,15 +131,15 @@ bool World::isValidTile(const sf::Vector2i& tile) const {
 }
 
 bool World::isSolidTile(sf::Vector2i const& pos) const {
-    for (auto& c : chunk) {
+    for (auto& c : chunks) {
         sf::Vector2i local{
-            pos.x - static_cast<int>(c->getOffset().x / TILE_SIZE),
-            pos.y - static_cast<int>(c->getOffset().y / TILE_SIZE)
+            pos.x - static_cast<int>(c.second->getOffset().x / TILE_SIZE),
+            pos.y - static_cast<int>(c.second->getOffset().y / TILE_SIZE)
         };
 
         if (local.x >= 0 && local.x < CHUNK_SIZE &&
             local.y >= 0 && local.y < CHUNK_SIZE) {
-            return c->isSolidTile(local.y, local.x);
+            return c.second->isSolidTile(local.y, local.x);
         }
     }
     return false;
@@ -192,15 +166,15 @@ bool World::isPassableAt(sf::Vector2f pos, sf::Vector2f size) const {
             bool passable = false;
 
             // Find the chunk containing this tile
-            for (auto& c : chunk) {
+            for (auto& c : chunks) {
                 sf::Vector2i local{
-                    tile.x - static_cast<int>(c->getOffset().x / TILE_SIZE),
-                    tile.y - static_cast<int>(c->getOffset().y / TILE_SIZE)
+                    tile.x - static_cast<int>(c.second->getOffset().x / TILE_SIZE),
+                    tile.y - static_cast<int>(c.second->getOffset().y / TILE_SIZE)
                 };
 
                 if (local.x >= 0 && local.x < CHUNK_SIZE &&
                     local.y >= 0 && local.y < CHUNK_SIZE) {
-                    passable = c->isPassableTile(local.y, local.x);
+                    passable = c.second->isPassableTile(local.y, local.x);
                     break; // found the chunk
                 }
             }
@@ -262,17 +236,68 @@ std::optional<sf::Vector2f> World::raycast(sf::Vector2f start, sf::Vector2f dir,
     return std::nullopt; // no hit
 }
 
+sf::Vector2i World::getPlayerChunk() const {
+    if (!player) return {0, 0};
+    sf::Vector2f pos = player->getPosition();
+    return {
+        static_cast<int>(std::floor(pos.x / (CHUNK_SIZE * TILE_SIZE))),
+        static_cast<int>(std::floor(pos.y / (CHUNK_SIZE * TILE_SIZE)))
+    };
+}
+
+void World::update_chunks() {
+    constexpr int CHUNK_RADIUS = 2;
+    if (!player) return;
+
+    sf::Vector2i playerChunk = getPlayerChunk();
+    std::unordered_set<sf::Vector2i, arb::Vector2iHash> desired;
+
+    // 1. build desired 3x3 chunk region
+    for (int dy = -CHUNK_RADIUS; dy <= CHUNK_RADIUS; ++dy) {
+        for (int dx = -CHUNK_RADIUS; dx <= CHUNK_RADIUS; ++dx) {
+            desired.insert({playerChunk.x + dx, playerChunk.y + dy});
+        }
+    }
+
+    // 2. unload chunks that are far away
+    std::vector<sf::Vector2i> to_remove;
+    for (auto& [pos, chunk] : chunks) {
+        if (desired.find(pos) == desired.end()) {
+            to_remove.push_back(pos);
+        }
+    }
+
+    for (auto& pos : to_remove) {
+        chunks.erase(pos);
+    }
+
+    // 3. request missing chunks
+    auto network = ClientNetwork::getInstance();
+
+    for (auto& pos : desired) {
+        if (chunks.find(pos) == chunks.end()) {
+            network->requestChunk(pos);
+        }
+    }
+}
+void World::addChunk(std::unique_ptr<Chunk> chunk) {
+    sf::Vector2i pos = chunk->getPos();
+    chunks[pos] = std::move(chunk);
+}
 
 void World::update(sf::Time dt) {
-    auto new_ = worldToTileCoords(player->getPosition());
     if (!player || !player->isAlive()) {
 
     }
     tile_highlight.update(Game::getInstance()->getMouseWorld());
 
+    static sf::Clock chunkStreamTimer;
+    if (chunkStreamTimer.getElapsedTime() > sf::seconds(0.5f)) { // twice a second
+        update_chunks();
+        chunkStreamTimer.restart();
+    }
+
     auto network = ClientNetwork::getInstance();
-
-
     // spawn new RemotePlayers
     for (auto const& [id, rp] : network->getPlayers()) {
         if (id == network->getMyId()) continue;
@@ -327,10 +352,11 @@ sf::String World::getTimeOfDay() const {
     return oss.str();
 }
 
-void World::update_tick(sf::Time elapsed) {
-    if (!pause_time)
-        time = (time + 1 ) % DAY_LENGTH;
+void World::setTime(uint64_t time) {
+    this->time = time % DAY_LENGTH;
+}
 
+void World::update_tick(sf::Time elapsed) {
     for (auto& x : entities) {
         if (x && x->isAlive()) {
             x->update_tick(elapsed);
@@ -340,7 +366,6 @@ void World::update_tick(sf::Time elapsed) {
     ClientNetwork::getInstance()->syncInput(player->getVelocity(), player->getItemRotation(), (uint16_t) player->getHoldingType());
 
     static Tile pref;
-    static bool place = true;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) {
         pref = Tile::Grass;
     }
@@ -353,17 +378,11 @@ void World::update_tick(sf::Time elapsed) {
         pref = Tile::Wood;
     }
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::B)) {
-        place = false;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::V)) {
-        place = true;
-    }
-
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
         sf::Vector2f mouse = Game::getInstance()->getMouseWorld();
 
-        for (auto& c : chunk) {
-            sf::Vector2f local = mouse - c->getOffset();
+        for (auto& c : chunks) {
+            sf::Vector2f local = mouse - c.second->getOffset();
 
             // Only update if the mouse is *inside this chunk*
             if (local.x >= 0.f && local.x < CHUNK_SIZE * TILE_SIZE &&
@@ -371,13 +390,7 @@ void World::update_tick(sf::Time elapsed) {
                 int cX = static_cast<int>(local.x / TILE_SIZE);
                 int cY = static_cast<int>(local.y / TILE_SIZE);
 
-                c->update_tile(cY, cX, pref);
-
-                if (place) {
-                    c->placeStatic(StaticObjectType::Fence, worldToTileCoords(mouse), {1, 1}, false, false, 0.f);
-                } else {
-                    c->breakStatic({cX, cY});
-                }
+                c.second->update_tile(cY, cX, pref);
                 break; // stop after the first matching chunk
             }
         }
@@ -401,12 +414,12 @@ TileRef World::resolve(sf::Vector2i const& wtile) const {
     int ly = wtile.y - cy * CHUNK_SIZE;
 
 
-    for (auto& c: chunk) {
-        if (c->getPos() == sf::Vector2i{cx, cy}) {
+    for (auto& c: chunks) {
+        if (c.second->getPos() == sf::Vector2i{cx, cy}) {
             TileRef r;
             r.lx = lx;
             r.ly= ly;
-            r.chunk = c;
+            r.chunk = c.second.get();
             return r;
         }
     }
@@ -427,9 +440,9 @@ void World::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         size
     );
 
-    for (auto& c: chunk) {
-        if (::overlaps(viewRect, c->getBounds())) {
-            c->render(target);
+    for (auto& c: chunks) {
+        if (::overlaps(viewRect, c.second->getBounds())) {
+            c.second->render(target);
         }
     }
 
@@ -492,13 +505,13 @@ void World::draw_lighting(sf::RenderTarget& target, sf::FloatRect const& viewRec
 void World::spawn_loot() {
     std::vector<sf::Vector2f> candid;
 
-    for (auto& c : chunk) {
+    for (auto& c : chunks) {
         for (int row = 0; row < CHUNK_SIZE; ++row) {
             for (int col = 0; col < CHUNK_SIZE; ++col) {
-                Tile t = c->getTile(row, col);
+                Tile t = c.second->getTile(row, col);
                 if (t != Tile::Water && t != Tile::Cobble) {
                     // tile center in world space
-                    sf::Vector2f pos = c->getOffset() +
+                    sf::Vector2f pos = c.second->getOffset() +
                         sf::Vector2f{col * TILE_SIZE + TILE_SIZE/2.f,
                                     row * TILE_SIZE + TILE_SIZE/2.f};
                     candid.push_back(pos);
@@ -533,13 +546,13 @@ void World::rebakeLighting() {
 
     std::vector<std::pair<sf::Vector2i,float>> lightsources;
 
-    for (auto& c : chunk) {
+    for (auto& c : chunks) {
         std::vector<StaticObject*> objectLights;
-        c->collectLights(objectLights);
+        c.second->collectLights(objectLights);
         for (auto* o : objectLights) {
             sf::Vector2i worldTile = o->origin + sf::Vector2i{
-                static_cast<int>(c->getOffset().x / TILE_SIZE),
-                static_cast<int>(c->getOffset().y / TILE_SIZE)
+                static_cast<int>(c.second->getOffset().x / TILE_SIZE),
+                static_cast<int>(c.second->getOffset().y / TILE_SIZE)
             };
 
             lightsources.push_back({worldTile, o->light_radius});
@@ -718,10 +731,5 @@ sf::Color World::getAmbientLight() const {
 
 
 void World::save_dirty_chunks() {
-    for (auto& c : chunk) {
-        if (c->isDirty()) {
-            c->save();
-            c->tidy();
-        }
-    }
+
 }

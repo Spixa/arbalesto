@@ -5,9 +5,7 @@
 #include <iostream>
 
 #include "static.h"
-
-constexpr uint8_t CHUNK_SIZE = 16;
-constexpr float TILE_SIZE = 32.f;
+#include "packets.h"
 
 class TileHighlight : public sf::Drawable, public sf::Transformable {
     sf::RectangleShape rect;
@@ -22,13 +20,6 @@ protected:
         target.draw(rect, states);
         target.draw(pos_text, states);
     }
-};
-
-enum class Tile: uint32_t {
-    Grass = 0,
-    Water = 1,
-    Wood = 2,
-    Cobble = 3,
 };
 
 class Chunk;
@@ -82,31 +73,33 @@ public:
         return sf::FloatRect({offset.x, offset.y}, {size, size});
     }
 
-    bool load();
-    bool save() {
-        auto path = getFile();
-        std::ofstream file(path, std::ios::binary);
-        if (!file) return false;
+    // bool load();
+    // bool save() {
+    //     auto path = getFile();
+    //     std::ofstream file(path, std::ios::binary);
+    //     if (!file) return false;
 
-        file.write(reinterpret_cast<const char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
+    //     file.write(reinterpret_cast<const char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
 
-        uint32_t count = static_cast<uint32_t>(objects.size());
-        file.write(reinterpret_cast<const char*>(&count), sizeof(count));
+    //     uint32_t count = static_cast<uint32_t>(objects.size());
+    //     file.write(reinterpret_cast<const char*>(&count), sizeof(count));
 
-        // write each object
-        for (auto const& obj : objects) {
-            file.write(reinterpret_cast<const char*>(&obj.type), sizeof(obj.type));
-            file.write(reinterpret_cast<const char*>(&obj.origin), sizeof(obj.origin));
-            file.write(reinterpret_cast<const char*>(&obj.size), sizeof(obj.size));
-            file.write(reinterpret_cast<const char*>(&obj.solid), sizeof(obj.solid));
-            file.write(reinterpret_cast<const char*>(&obj.emit), sizeof(obj.emit));
-            file.write(reinterpret_cast<const char*>(&obj.light_radius), sizeof(obj.light_radius));
-            file.write(reinterpret_cast<const char*>(&obj.atlas_rect), sizeof(obj.atlas_rect));
-        }
+    //     // write each object
+    //     for (auto const& obj : objects) {
+    //         file.write(reinterpret_cast<const char*>(&obj.type), sizeof(obj.type));
+    //         file.write(reinterpret_cast<const char*>(&obj.origin), sizeof(obj.origin));
+    //         file.write(reinterpret_cast<const char*>(&obj.size), sizeof(obj.size));
+    //         file.write(reinterpret_cast<const char*>(&obj.solid), sizeof(obj.solid));
+    //         file.write(reinterpret_cast<const char*>(&obj.emit), sizeof(obj.emit));
+    //         file.write(reinterpret_cast<const char*>(&obj.light_radius), sizeof(obj.light_radius));
+    //         file.write(reinterpret_cast<const char*>(&obj.atlas_rect), sizeof(obj.atlas_rect));
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
+
     void update_tick(sf::Vector2f mouse_coords, Tile selected);
+    static std::unique_ptr<Chunk> fromPacket(sf::Packet& pkt);
     void render(sf::RenderTarget& target);
 
     std::string getFile() const {
@@ -122,8 +115,6 @@ public:
     void rebuildStaticVerts();
 
     void collectLights(std::vector<StaticObject*>& lightsOut);
-    bool isDirty() const { return dirty; }
-    void tidy() { dirty = false; }
 private:
     inline uint64_t encode_name() const {
         // pack signed into 32+32 bits

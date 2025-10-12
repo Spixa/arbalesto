@@ -22,9 +22,10 @@ void TileHighlight::update(sf::Vector2f mouse) {
     setPosition(w->tileToWorldCoords(wt));
 
     std::stringstream ss;
+    ss << "(" << wt.x << ", " << wt.y << ") ";
     auto t = w->resolve(wt);
     if (t.valid())
-        ss << "(" << wt.x << ", " << wt.y << ") " << magic_enum::enum_name(t.chunk->getTile(t.ly, t.lx));
+        ss << magic_enum::enum_name(t.chunk->getTile(t.ly, t.lx));
     pos_text.setString(ss.str());
 }
 
@@ -50,32 +51,32 @@ Chunk::~Chunk() {
 
 }
 
-bool Chunk::load() {
-    auto path = getFile();
-    std::ifstream file(path, std::ios::binary);
-    if (!file) {
-        return false;
-    }
+// bool Chunk::load() {
+//     auto path = getFile();
+//     std::ifstream file(path, std::ios::binary);
+//     if (!file) {
+//         return false;
+//     }
 
-    file.read(reinterpret_cast<char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
-    build();
+//     file.read(reinterpret_cast<char*>(data.data()), CHUNK_SIZE * CHUNK_SIZE * sizeof(Tile));
+//     build();
 
-    objects.clear();
-    uint32_t count = 0;
-    if (file.read(reinterpret_cast<char*>(&count), sizeof(count))) {
-        objects.resize(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            file.read(reinterpret_cast<char*>(&objects[i].type), sizeof(objects[i].type));
-            file.read(reinterpret_cast<char*>(&objects[i].origin), sizeof(objects[i].origin));
-            file.read(reinterpret_cast<char*>(&objects[i].size), sizeof(objects[i].size));
-            file.read(reinterpret_cast<char*>(&objects[i].solid), sizeof(objects[i].solid));
-            file.read(reinterpret_cast<char*>(&objects[i].emit), sizeof(objects[i].emit));
-            file.read(reinterpret_cast<char*>(&objects[i].light_radius), sizeof(objects[i].light_radius));
-            file.read(reinterpret_cast<char*>(&objects[i].atlas_rect), sizeof(objects[i].atlas_rect));
-        }
-    }
-    return file.good();
-}
+//     objects.clear();
+//     uint32_t count = 0;
+//     if (file.read(reinterpret_cast<char*>(&count), sizeof(count))) {
+//         objects.resize(count);
+//         for (uint32_t i = 0; i < count; ++i) {
+//             file.read(reinterpret_cast<char*>(&objects[i].type), sizeof(objects[i].type));
+//             file.read(reinterpret_cast<char*>(&objects[i].origin), sizeof(objects[i].origin));
+//             file.read(reinterpret_cast<char*>(&objects[i].size), sizeof(objects[i].size));
+//             file.read(reinterpret_cast<char*>(&objects[i].solid), sizeof(objects[i].solid));
+//             file.read(reinterpret_cast<char*>(&objects[i].emit), sizeof(objects[i].emit));
+//             file.read(reinterpret_cast<char*>(&objects[i].light_radius), sizeof(objects[i].light_radius));
+//             file.read(reinterpret_cast<char*>(&objects[i].atlas_rect), sizeof(objects[i].atlas_rect));
+//         }
+//     }
+//     return file.good();
+// }
 
 void Chunk::build() {
     const float epsilon = 0.01f;
@@ -112,6 +113,20 @@ void Chunk::build() {
             quad[5].texCoords = {tx + epsilon, ty + TILE_SIZE - epsilon};
         }
     }
+}
+
+std::unique_ptr<Chunk> Chunk::fromPacket(sf::Packet& pkt) {
+    int32_t x, y;
+    pkt >> x >> y;
+
+    std::array<Tile, CHUNK_SIZE*CHUNK_SIZE> tiles;
+    for (auto& t : tiles) {
+        uint32_t v;
+        pkt >> v;
+        t = static_cast<Tile>(v);
+    }
+
+    return std::make_unique<Chunk>(tiles, sf::Vector2i{x, y});
 }
 
 void Chunk::update_tick(sf::Vector2f mouse_coords, Tile selected) {

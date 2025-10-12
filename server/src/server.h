@@ -1,11 +1,9 @@
 #pragma once
 
 #include "packets.h"
+#include "generator.h"
 #include <unordered_map>
 #include <cmath>
-
-constexpr uint8_t CHUNK_SIZE = 16;
-constexpr float TILE_SIZE = 32.f;
 
 struct Remote {
     sf::IpAddress addr;
@@ -26,18 +24,30 @@ inline sf::Vector2i worldToChunkCoords(sf::Vector2f pos) {
     return {cx, cy};
 }
 
+inline sf::Vector2f tileToWorldCoords(const sf::Vector2i& tile) {
+    return sf::Vector2f{
+        static_cast<float>(tile.x * TILE_SIZE),
+        static_cast<float>(tile.y * TILE_SIZE)
+    };
+}
+
 class Server {
     sf::UdpSocket sock;
+    uint64_t tod{0};
     uint32_t next_seq{1};
     uint32_t next_id{1};
     std::unordered_map<uint32_t, PlayerState> players;
     std::unordered_map<uint32_t, Remote> remotes;
+    ChunkGenerator generator{1337}; // global or member
 public:
     ~Server() { sock.unbind(); }
     void bind(unsigned short port);
     void run();
 
     std::optional<uint32_t> findRemoteIdByEndpoint(const sf::IpAddress& a, unsigned short port) const;
+    void broadcast(sf::String const& raw);
+    void tellraw(uint32_t id, sf::String const& raw);
+    void teleport(uint32_t id, sf::Vector2f const& to);
 private:
     void sync(Remote& remote);
     void update();

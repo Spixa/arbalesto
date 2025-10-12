@@ -26,11 +26,12 @@ void Server::run() {
 
 void Server::sync(Remote& remote) {
     sf::Packet pkt;
-
-    pkt << (uint8_t) PacketType::Snapshot << next_seq;
+    pkt << PacketHeader{next_seq, PacketType::Snapshot};
 
     auto center_chunk = worldToChunkCoords(remote.state.pos);
-    int radius = 1; // 3x3 chunks
+    int radius = 2; // 5x5 chunks
+
+    pkt << (uint64_t) tod;
 
     auto in_range = [&](sf::Vector2f pos) {
         sf::Vector2i c = worldToChunkCoords(pos);
@@ -59,12 +60,18 @@ void Server::recv() {
         if (!sender) continue;
         sf::IpAddress addr = *sender;
 
-        uint8_t type_b;
-        if (!(pkt >> type_b)) continue;
-        PacketType type = static_cast<PacketType>(type_b);
+        PacketHeader hdr;
+        if (!(pkt >> hdr)) continue;
+        auto type = hdr.type;
+        uint32_t seq = hdr.seq;
 
         switch (type) {
             case PacketType::JoinRequest: {
+                if (findRemoteIdByEndpoint(addr, port)) {
+                    spdlog::get("server")->warn("Duplicate JoinRequest from {}", addr.toString());
+                    break;
+                }
+
                 std::string uname;
                 pkt >> uname;
 
@@ -82,21 +89,24 @@ void Server::recv() {
                 spdlog::get("server")->info("Player '{}' joined (id={}) from {}:{}", uname, id, addr.toString(), port);
 
                 sf::Packet reply;
-                reply << (uint8_t) PacketType::JoinAccept << id << (uint32_t) players.size();
+                reply << PacketHeader{next_seq, PacketType::JoinAccept} << id << (uint32_t) players.size();
                 for (auto const& [pid, ps] : players) {
                     reply << pid << ps.uname << ps.pos.x << ps.pos.y;
                 }
                 auto res = sock.send(reply, addr, port);
 
-                sf::Packet spawn;
-                spawn << (uint8_t) PacketType::Snapshot << next_seq;
-                spawn << (uint32_t)1; // one player
-                spawn << players[id]; // the new player
+                broadcast("&e" + uname + " joined the game");
+                tellraw(id, "You were teleported to [20, 160]");
+                teleport(id, tileToWorldCoords({20, 160}));
+                // sf::Packet spawn;
+                // spawn << PacketHeader{next_seq, PacketType::Snapshot};
+                // spawn << (uint32_t)1; // one player
+                // // spawn << players[id]; // the new player
 
-                for (auto& [oid, remote] : remotes) {
-                    if (oid == id) continue; // don’t send to self
-                    auto res2 = sock.send(spawn, remote.addr, remote.port);
-                }
+                // for (auto& [oid, remote] : remotes) {
+                //     if (oid == id) continue; // don’t send to self
+                //     auto res2 = sock.send(spawn, remote.addr, remote.port);
+                // }
 
             } break;
 
@@ -130,15 +140,41 @@ void Server::recv() {
                             author = remotes.at(*remote_id).state.uname;
                             if (!author.empty()) {
                                 sf::Packet chatter;
-                                chatter << (uint8_t) PacketType::ChatMessage << std::string("<" + author + "> " + msg);
+                                chatter << PacketHeader{next_seq, PacketType::ChatMessage} << std::string("&e" + author + "&f > " + msg);
                                 for (auto const& [i, r] : remotes) auto res = sock.send(chatter, r.addr, r.port);
                             }
                         }
                     }
                 }
             } break;
+
+            case PacketType::ChunkRequest: {
+                int32_t cx, cy;
+                pkt >> cx >> cy;
+
+                NetChunk chunk = generator.generateOrLoad(cx, cy);
+                sf::Packet chunk_data;
+                chunk_data << PacketHeader{next_seq, PacketType::ChunkData};
+                chunk.serialize(chunk_data);
+
+                auto discard = sock.send(chunk_data, addr, port);
+            } break;
             default: break;
         }
+    }
+}
+
+void Server::broadcast(sf::String const& raw) {
+    for (auto const& [id, _] : remotes) tellraw(id, raw);
+}
+
+void Server::tellraw(uint32_t id, sf::String const& raw) {
+    sf::Packet chatter;
+    chatter << PacketHeader{next_seq, PacketType::ChatMessage} << std::string(raw);
+
+    if (remotes.find(id) != remotes.end()) {
+        Remote& r = remotes.at(id);
+        auto res = sock.send(chatter, r.addr, r.port);
     }
 }
 
@@ -172,6 +208,20 @@ void Server::update() {
         remotes.erase(id);
         players.erase(id);
     }
+
+    tod += 1;
+}
+
+void Server::teleport(uint32_t id, sf::Vector2f const& to) {
+    if (players.find(id) != players.end()) {
+        players.at(id).pos = to;
+        auto ip = remotes.at(id).addr;
+        auto addr = remotes.at(id).port;
+
+        sf::Packet tp;
+        tp << PacketHeader{next_seq, PacketType::Teleport} << to.x << to.y;
+        auto discard = sock.send(tp, ip, addr);
+    } else return;
 }
 
 std::optional<uint32_t> Server::findRemoteIdByEndpoint(const sf::IpAddress& a, unsigned short port) const {

@@ -29,7 +29,7 @@ inline std::string colorize_demo(const std::string &input) {
 GameState::GameState() : State("game"), world{"overworld"}, chat_text{"> ", Game::getInstance()->getFallbackFont(), 26}, chat_box{Game::getInstance()->getFallbackFont()} {
 
     world.addEntity(std::make_unique<ControllingPlayer>());
-    world.addLight({0, 0}, 8.0, sf::Color::White);
+    world.addLight({20, 160}, 20.0, sf::Color::White);
     sf::FloatRect ui = Game::getInstance()->getUIBounds();
 
     float padding = 20.f;
@@ -90,7 +90,7 @@ void GameState::update(sf::Time dt) {
     }
 
     if (behind > 100) {
-        Game::getInstance()->sendWarning("More than 100 ticks behind! (5 seconds)");
+        Game::getInstance()->sendWarning("More than 100 ticks behind! (2 seconds)");
     }
 }
 
@@ -112,17 +112,6 @@ void GameState::update_event(const std::optional<sf::Event>& e) {
             chat_box.setAlwaysVisible(true);
             ignore_next = true;
             return;
-        }
-
-        if (key->code == sf::Keyboard::Key::G && !chat_text.isFocused()) {
-            sf::Vector2f center = world.getPlayer()->getPosition();
-            int count = 8;
-            float radius = 200;
-            for (int i = 0; i < count; ++i) {
-                float angle = 2.f * 3.14159265f * i / count; // angle in radians
-                sf::Vector2f pos = center + sf::Vector2f{std::cos(angle) * radius, std::sin(angle) * radius};
-                world.addEntity(std::make_unique<AiPlayer>(pos));
-            }
         }
 
         if (key->code == sf::Keyboard::Key::Slash && !chat_text.isFocused()) {
@@ -163,5 +152,5 @@ void GameState::render_gui(sf::RenderTarget& targ) {
 }
 
 void GameState::tell(sf::String const& raw) {
-    chat_box.push(raw);
+    chat_box.push(" " + raw);
 }

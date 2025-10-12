@@ -18,6 +18,7 @@ public:
     void addLight(sf::Vector2i at, float r, sf::Color col);
     void burstSmoke(sf::Vector2f const& wcoords, int count, bool left);
     Player* getPlayer();
+    sf::Vector2i getPlayerChunk() const;
     Player* getNearestEntity(Entity* from);
     bool isPassableAt(sf::Vector2f pos, sf::Vector2f size) const;
     sf::Color getAmbientLight() const;
@@ -34,7 +35,9 @@ public:
     std::vector<std::unique_ptr<Entity>>& getEntities();
 
     void addRemote(uint32_t id, std::unique_ptr<RemotePlayer> player);
+    void addChunk(std::unique_ptr<Chunk> chunk);
     void removeRemote(uint32_t id);
+    void setTime(uint64_t time);
 public:
     std::string const& getName() { return name; }
 
@@ -46,6 +49,7 @@ protected:
     void draw_lighting(sf::RenderTarget&, sf::FloatRect const& viewRect) const;
 private:
     void spawn_loot(); // expensive
+    void update_chunks(); // expensive
     void check_collisions(); // optimized
     void save_dirty_chunks(); // expensive
 private:
@@ -62,7 +66,7 @@ private:
     SmokeSystem smoke;
     TileHighlight tile_highlight;
     sf::Clock chunk_idle{};
-    std::vector<Chunk*> chunk;
+    std::unordered_map<sf::Vector2i, std::unique_ptr<Chunk>, arb::Vector2iHash> chunks;
     std::string name;
 
     // daynight cycle

@@ -30,8 +30,9 @@ void ClientNetwork::join(sf::IpAddress const& ip, unsigned short const& port, sf
     }
 
     sf::Packet pkt;
-    pkt << (uint8_t) PacketType::JoinRequest << username;
+    pkt << PacketHeader{next_seq++, PacketType::JoinRequest} << username;
     auto send = socket.send(pkt, server_addr, server_port);
+    last_snapshot = steady_clock::now();
 }
 
 void ClientNetwork::update(sf::Time elapsed) {
@@ -59,26 +60,33 @@ void ClientNetwork::update(sf::Time elapsed) {
 
     // phase 4: remove stale
     for (auto id : to_erase) players.erase(id);
+
+    // phase 5: maintain awareness of connection
+    if (duration<float>(steady_clock::now() - last_snapshot).count() > 10.f) {
+        Game::getInstance()->sendWarning("Have not received an udpate for over 10 seconds");
+    }
 }
 
 void ClientNetwork::syncInput(sf::Vector2f const& vel, float rot, uint16_t held) {
     if (my_id == 0) return;
 
     sf::Packet pkt;
-    pkt << (uint8_t) PacketType::Input << my_id << vel.x << vel.y << rot << held;
+    pkt << PacketHeader{next_seq++, PacketType::Input} << my_id << vel.x << vel.y << rot << held;
     auto res = socket.send(pkt, server_addr, server_port);
 }
 
 void ClientNetwork::chat(std::string const& msg) {
     sf::Packet pkt;
-    pkt << (uint8_t) PacketType::ChatMessage << msg;
+    pkt << PacketHeader{next_seq++, PacketType::ChatMessage} << msg;
     auto res = socket.send(pkt, server_addr, server_port);
 }
 
 void ClientNetwork::proc_packets(sf::Packet& pkt, const sf::IpAddress& sender, unsigned short port) {
-    uint8_t type_b;
-    pkt >> type_b;
-    PacketType type = static_cast<PacketType>(type_b);
+    PacketHeader hdr;
+    if (!(pkt >> hdr)) return;
+    auto type = hdr.type;
+
+    if (hdr.seq <= last_seq_seen) last_seq_seen = hdr.seq;
 
     switch (type) {
         case PacketType::JoinAccept: {
@@ -104,17 +112,15 @@ void ClientNetwork::proc_packets(sf::Packet& pkt, const sf::IpAddress& sender, u
                 r.last_seen = steady_clock::now();
                 players.insert_or_assign(n_id, std::move(r));
             }
-
-            Game::getInstance()->tell("&aClient &8> &fYou have joined the game with the ID " + std::to_string(my_id));
         } break;
 
         case PacketType::Snapshot: {
-            uint32_t seq;
-            if (!(pkt >> seq)) return;
-            if (seq <= last_seq_seen) last_seq_seen = seq;
-
+            uint64_t time;
             uint32_t count;
-            if (!(pkt >> count)) return;
+            if (!(pkt >> time >> count)) return;
+            last_snapshot = steady_clock::now();
+
+            Game::getInstance()->getWorld()->setTime(time);
 
             for (uint32_t i = 0; i < count; ++i) {
                 PlayerState st;
@@ -136,19 +142,35 @@ void ClientNetwork::proc_packets(sf::Packet& pkt, const sf::IpAddress& sender, u
                 }
             }
         } break;
-
         case PacketType::ChatMessage: {
             std::string content;
             pkt >> content;
             if (!content.empty()) Game::getInstance()->tell(content);
         } break;
-
         case PacketType::WarningMessage: {
             std::string content;
             pkt >> content;
             if (!content.empty()) Game::getInstance()->sendWarning(content);
         } break;
+        case PacketType::ChunkData: {
+            auto chunk = Chunk::fromPacket(pkt);
+            Game::getInstance()->getWorld()->addChunk(std::move(chunk));
+        } break;
+        case PacketType::Teleport: {
+            float x, y;
+            pkt >> x >> y;
 
+            Game::getInstance()->getWorld()->getPlayer()->setPosition({x, y});
+            Game::getInstance()->getWorld()->rebakeLighting();
+            Game::getInstance()->getWorld()->rebakeLighting();
+        } break;
         default: break;
     }
+}
+
+void ClientNetwork::requestChunk(sf::Vector2i const& loc) {
+    sf::Packet packet;
+    packet << PacketHeader{next_seq++, PacketType::ChunkRequest};
+    packet << loc.x << loc.y;
+    auto discard = socket.send(packet, server_addr, server_port);
 }
