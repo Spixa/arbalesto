@@ -162,7 +162,16 @@ void ClientNetwork::proc_packets(sf::Packet& pkt, const sf::IpAddress& sender, u
 
             Game::getInstance()->getWorld()->getPlayer()->setPosition({x, y});
             Game::getInstance()->getWorld()->rebakeLighting();
-            Game::getInstance()->getWorld()->rebakeLighting();
+        } break;
+        case PacketType::TileUpdate: {
+            TileUpdate u;
+            if (!(pkt >> u)) break;
+
+            if (auto* c = Game::getInstance()->getWorld()->getChunk({u.cx, u.cy})) {
+                Tile tile = (Tile) u.dword;
+                c->update_tile(u.ly, u.lx, tile);
+            }
+
         } break;
         default: break;
     }
@@ -173,4 +182,13 @@ void ClientNetwork::requestChunk(sf::Vector2i const& loc) {
     packet << PacketHeader{next_seq++, PacketType::ChunkRequest};
     packet << loc.x << loc.y;
     auto discard = socket.send(packet, server_addr, server_port);
+}
+
+void ClientNetwork::submitTile(sf::Vector2i const& chunk, sf::Vector2u const& local, Tile tile) {
+    sf::Packet pkt;
+    pkt << PacketHeader{next_seq++, PacketType::TileEdit};
+    TileEdit edit{chunk.x, chunk.y, static_cast<uint8_t>(local.x), static_cast<uint8_t>(local.y), (uint32_t) tile};
+    pkt << edit;
+
+    auto discard = socket.send(pkt, server_addr, server_port);
 }

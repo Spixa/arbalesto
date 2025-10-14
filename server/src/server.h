@@ -31,6 +31,16 @@ inline sf::Vector2f tileToWorldCoords(const sf::Vector2i& tile) {
     };
 }
 
+struct PairHash {
+    std::size_t operator()(const std::pair<int32_t, int32_t>& p) const noexcept {
+        // Use 64-bit mixing for good distribution
+        // (based on boost::hash_combine)
+        std::size_t h1 = std::hash<int32_t>{}(p.first);
+        std::size_t h2 = std::hash<int32_t>{}(p.second);
+        return h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1 << 6) + (h1 >> 2));
+    }
+};
+
 class Server {
     sf::UdpSocket sock;
     uint64_t tod{0};
@@ -48,10 +58,14 @@ public:
     void broadcast(sf::String const& raw);
     void tellraw(uint32_t id, sf::String const& raw);
     void teleport(uint32_t id, sf::Vector2f const& to);
+public:
+    NetChunk getNetChunk(int32_t cx, int32_t cy);
+    void saveNetChunk(NetChunk const& nc);
 private:
     void sync(Remote& remote);
     void update();
     void recv();
 private:
     const float TICK_SECS = 1.f / TICKRATE;
+    std::unordered_map<std::pair<int32_t,int32_t>, NetChunk, PairHash> netchunk_cache;
 };

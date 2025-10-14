@@ -12,7 +12,7 @@ Game* Game::getInstance() {
 }
 
 Game::Game()
-    : window(sf::VideoMode::getFullscreenModes().front(), "Arbalesto", sf::Style::Close, sf::State::Fullscreen),
+    : window(sf::VideoMode({800, 450}), "Arbalesto", sf::Style::Close, sf::State::Windowed),
     dt_clock(), state_man(), fps(*font_man.get("fallback", "../res/boldpixels.ttf").get()),
     warning(*font_man.get("fallback"), 5.f)
 {

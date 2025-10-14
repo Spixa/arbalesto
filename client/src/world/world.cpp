@@ -366,19 +366,24 @@ void World::update_tick(sf::Time elapsed) {
     ClientNetwork::getInstance()->syncInput(player->getVelocity(), player->getItemRotation(), (uint16_t) player->getHoldingType());
 
     static Tile pref;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) {
-        pref = Tile::Grass;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num2)) {
-        pref = Tile::Water;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3)) {
-        pref = Tile::Cobble;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4)) {
-        pref = Tile::Wood;
+    bool focus = Game::getInstance()->shouldWorldFocus();
+    if (focus) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) {
+            pref = Tile::Grass;
+        }
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num2)) {
+            pref = Tile::Water;
+        }
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3)) {
+            pref = Tile::Cobble;
+        } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4)) {
+            pref = Tile::Wood;
+        } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num5)) {
+            pref = Tile::Sand;
+        }
     }
 
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) && focus) {
         sf::Vector2f mouse = Game::getInstance()->getMouseWorld();
 
         for (auto& c : chunks) {
@@ -387,10 +392,10 @@ void World::update_tick(sf::Time elapsed) {
             // Only update if the mouse is *inside this chunk*
             if (local.x >= 0.f && local.x < CHUNK_SIZE * TILE_SIZE &&
                 local.y >= 0.f && local.y < CHUNK_SIZE * TILE_SIZE) {
-                int cX = static_cast<int>(local.x / TILE_SIZE);
-                int cY = static_cast<int>(local.y / TILE_SIZE);
+                auto cX = static_cast<uint32_t>(local.x / TILE_SIZE);
+                auto cY = static_cast<uint32_t>(local.y / TILE_SIZE);
 
-                c.second->update_tile(cY, cX, pref);
+                ClientNetwork::getInstance()->submitTile(c.second->getPos(), {cX, cY}, pref);
                 break; // stop after the first matching chunk
             }
         }
@@ -402,6 +407,13 @@ void World::update_tick(sf::Time elapsed) {
         save_dirty_chunks();
         chunk_idle.restart();
     }
+}
+
+Chunk* World::getChunk(sf::Vector2i const& pos) {
+    if (chunks.find(pos) != chunks.end()) {
+        return chunks.at(pos).get();
+    }
+    return nullptr;
 }
 
 TileRef World::resolve(sf::Vector2i const& wtile) const {

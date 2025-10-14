@@ -36,6 +36,7 @@ public:
 
     void addRemote(uint32_t id, std::unique_ptr<RemotePlayer> player);
     void addChunk(std::unique_ptr<Chunk> chunk);
+    Chunk* getChunk(sf::Vector2i const& pos);
     void removeRemote(uint32_t id);
     void setTime(uint64_t time);
 public:

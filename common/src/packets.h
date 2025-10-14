@@ -12,13 +12,13 @@ enum class PacketType : uint8_t {
     Input,
     Snapshot,
     Shoot,
-    Place,
-    Break,
     ChunkRequest,
     ChunkData,
     Teleport,
     ChatMessage,
-    WarningMessage
+    WarningMessage,
+    TileEdit,
+    TileUpdate
 };
 
 struct PacketHeader {
@@ -49,10 +49,21 @@ enum class Tile: uint32_t {
 struct NetChunk {
     int32_t x, y;
     std::array<Tile, CHUNK_SIZE * CHUNK_SIZE> tiles;
-
+    bool dirty = false;
     void serialize(sf::Packet& packet) const;
 };
 
+struct TileEdit {
+    int32_t cx, cy;
+    uint8_t lx, ly;
+    uint32_t dword;
+};
+
+struct TileUpdate {
+    int32_t cx, cy;
+    uint8_t lx, ly;
+    uint32_t dword;
+};
 
 struct PlayerState {
     uint32_t id;
@@ -68,4 +79,20 @@ inline sf::Packet& operator <<(sf::Packet& p, PlayerState const& s) {
 }
 inline sf::Packet& operator >>(sf::Packet& p, PlayerState& s) {
     return p >> s.id >> s.uname >> s.pos.x >> s.pos.y >> s.vel.x >> s.vel.y >> s.held_item >> s.rotation;
+}
+
+inline sf::Packet& operator<<(sf::Packet& pkt, const TileEdit& e) {
+    return pkt << e.cx << e.cy << e.lx << e.ly << e.dword;
+}
+
+inline sf::Packet& operator>>(sf::Packet& pkt, TileEdit& e) {
+    return pkt >> e.cx >> e.cy >> e.lx >> e.ly >> e.dword;
+}
+
+inline sf::Packet& operator<<(sf::Packet& pkt, const TileUpdate& u) {
+    return pkt << u.cx << u.cy << u.lx << u.ly << u.dword;
+}
+
+inline sf::Packet& operator>>(sf::Packet& pkt, TileUpdate& u) {
+    return pkt >> u.cx >> u.cy >> u.lx >> u.ly >> u.dword;
 }

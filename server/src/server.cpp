@@ -152,12 +152,59 @@ void Server::recv() {
                 int32_t cx, cy;
                 pkt >> cx >> cy;
 
-                NetChunk chunk = generator.generateOrLoad(cx, cy);
+                NetChunk chunk = getNetChunk(cx, cy);
                 sf::Packet chunk_data;
                 chunk_data << PacketHeader{next_seq, PacketType::ChunkData};
                 chunk.serialize(chunk_data);
 
                 auto discard = sock.send(chunk_data, addr, port);
+            } break;
+            case PacketType::TileEdit: {
+                TileEdit edit;
+                if (!(pkt >> edit)) break;
+
+                int32_t cx = edit.cx;
+                int32_t cy = edit.cy;
+                uint8_t lx = edit.lx;
+                uint8_t ly = edit.ly;
+                Tile ntile = (Tile) edit.dword;
+
+                if (lx >= CHUNK_SIZE || ly >= CHUNK_SIZE) {
+                    spdlog::get("server")->warn("Invalid TileEdit coords: {} {}", lx, ly);
+                    break;
+                }
+
+                auto c = getNetChunk(cx, cy);
+                size_t idx = static_cast<size_t>(ly) * CHUNK_SIZE + static_cast<size_t>(lx);
+                Tile otile = c.tiles[idx];
+
+                if (ntile != otile) {
+                    c.tiles[idx] = ntile;
+                    saveNetChunk(c);
+                }
+
+                sf::Packet update;
+                update << PacketHeader{seq, PacketType::TileUpdate};
+                TileUpdate u;
+                u.cx = cx;
+                u.cy = cy;
+                u.lx = lx;
+                u.ly = ly;
+                u.dword = (uint32_t) ntile;
+
+                update << u;
+
+                const float BROADCAST_RADIUS_IN_CHUNKS = 2;
+                for (auto const& [pid, remote] : remotes) {
+                    sf::Vector2f pos = remote.state.pos;
+                    int rx = static_cast<int>(std::floor(pos.x / (CHUNK_SIZE * TILE_SIZE)));
+                    int ry = static_cast<int>(std::floor(pos.y / (CHUNK_SIZE * TILE_SIZE)));
+                    int dx = std::abs(rx - cx);
+                    int dy = std::abs(ry - cy);
+                    if (dx <= BROADCAST_RADIUS_IN_CHUNKS && dy <= BROADCAST_RADIUS_IN_CHUNKS) {
+                        auto discard = sock.send(update, remote.addr, remote.port);
+                    }
+                }
             } break;
             default: break;
         }
@@ -229,4 +276,30 @@ std::optional<uint32_t> Server::findRemoteIdByEndpoint(const sf::IpAddress& a, u
         if (r.addr == a && r.port == port) return id;
     }
     return std::nullopt;
+}
+
+NetChunk Server::getNetChunk(int32_t cx, int32_t cy) {
+    auto coord = std::pair<int32_t, int32_t>{cx, cy};
+    auto it = netchunk_cache.find(coord);
+    if (it != netchunk_cache.end()) return it->second;
+
+    NetChunk chunk = generator.generateOrLoad(cx, cy);
+    netchunk_cache.emplace(coord, chunk);
+    return chunk;
+}
+
+void Server::saveNetChunk(NetChunk const& nc) {
+    std::filesystem::create_directories("chunks");
+    std::ostringstream oss;
+    oss << "chunks/" << nc.x << "_" << nc.y << ".bin";
+    std::ofstream file(oss.str(), std::ios::binary | std::ios::trunc);
+    if (!file) {
+        spdlog::get("server")->warn("Failed to save chunk ({},{})", nc.x, nc.y);
+        return;
+    }
+    file.write(reinterpret_cast<const char*>(nc.tiles.data()), nc.tiles.size() * sizeof(uint32_t));
+    file.close();
+    // keep cache in sync
+
+    netchunk_cache[{nc.x, nc.y}] = nc;
 }
