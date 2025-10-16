@@ -40,6 +40,7 @@ void Item::update(sf::Time dt, bool facing, sf::Vector2f const& dir, Entity* use
 
             if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
                 onLMB(dir, user);
+                ClientNetwork::getInstance()->shoot(dir);
                 cooldown.restart();
             }
         }

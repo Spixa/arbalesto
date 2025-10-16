@@ -170,8 +170,17 @@ void ClientNetwork::proc_packets(sf::Packet& pkt, const sf::IpAddress& sender, u
             if (auto* c = Game::getInstance()->getWorld()->getChunk({u.cx, u.cy})) {
                 Tile tile = (Tile) u.dword;
                 c->update_tile(u.ly, u.lx, tile);
+                Game::getInstance()->getWorld()->rebakeLighting();
             }
 
+        } break;
+        case PacketType::Shoot: {
+            uint32_t id;
+            float x, y;
+            if (!(pkt >> id >> x >> y)) break;
+
+            auto r = Game::getInstance()->getWorld()->getRemote(id);
+            r->shoot({x, y});
         } break;
         default: break;
     }
@@ -189,6 +198,14 @@ void ClientNetwork::submitTile(sf::Vector2i const& chunk, sf::Vector2u const& lo
     pkt << PacketHeader{next_seq++, PacketType::TileEdit};
     TileEdit edit{chunk.x, chunk.y, static_cast<uint8_t>(local.x), static_cast<uint8_t>(local.y), (uint32_t) tile};
     pkt << edit;
+
+    auto discard = socket.send(pkt, server_addr, server_port);
+}
+
+void ClientNetwork::shoot(sf::Vector2f const& towards) {
+    sf::Packet pkt;
+    pkt << PacketHeader{next_seq++, PacketType::Shoot};
+    pkt << towards.x << towards.y;
 
     auto discard = socket.send(pkt, server_addr, server_port);
 }

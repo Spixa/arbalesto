@@ -12,7 +12,7 @@ Game* Game::getInstance() {
 }
 
 Game::Game()
-    : window(sf::VideoMode({800, 450}), "Arbalesto", sf::Style::Close, sf::State::Windowed),
+    : window(sf::VideoMode({1024, 576}), "Arbalesto", sf::Style::Close, sf::State::Windowed),
     dt_clock(), state_man(), fps(*font_man.get("fallback", "../res/boldpixels.ttf").get()),
     warning(*font_man.get("fallback"), 5.f)
 {
@@ -75,7 +75,7 @@ void Game::update(sf::Time elapsed) {
 void Game::update_stats(sf::Time elapsed) {
     if (fps_clock.getElapsedTime().asMilliseconds() >= 250) {
         std::string fps_str = std::to_string(int(1.f / elapsed.asSeconds()));
-        fps.setString("Arbalesto alpha v0.1.10 (fps: " + fps_str + ")" + getWorld()->getTimeOfDay() + "\n" + etc_info);
+        fps.setString(fps_str + " " + getWorld()->getTimeOfDay());
         fps_clock.restart();
     }
 }

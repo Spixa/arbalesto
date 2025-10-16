@@ -18,6 +18,7 @@ public:
     void syncInput(sf::Vector2f const& vel, float rot, uint16_t held);
     void submitTile(sf::Vector2i const& chunk, sf::Vector2u const& local, Tile tile);
     void requestChunk(sf::Vector2i const& pos);
+    void shoot(sf::Vector2f const& towards);
     const std::unordered_map<uint32_t, Remote>& getPlayers() const { return players; }
 
     uint32_t getMyId() const { return my_id; }

@@ -54,7 +54,7 @@ public:
 
     void update_derived(sf::Time dt) override;
     void setTarget(sf::Vector2f const& tpos, sf::Vector2f const& tvel, float trot, uint16_t titem);
-
+    void shoot(sf::Vector2f const& dir);
 private:
     PlayerState state;
     sf::Vector2f target;

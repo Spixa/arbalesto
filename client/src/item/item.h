@@ -25,7 +25,7 @@ public:
     ItemType getType() { return type;}
     void update(sf::Time dt, bool facing, sf::Vector2f const& dir, Entity* user);
     sf::FloatRect getLocalBounds() const { return item_display.getLocalBounds(); }
-protected:
+public:
     virtual void update_derived(sf::Time dt, bool facing, sf::Vector2f const& dir) {};
     virtual void onRMB(sf::Vector2f const& dir, Entity* user) {};
     virtual void onLMB(sf::Vector2f const& dir, Entity* user) {};

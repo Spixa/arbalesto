@@ -10,7 +10,7 @@
 Player::Player(ItemType holding_stuff, sf::Vector2f spawn, float health) : Entity(next(), EntityType::PlayerEntity, health),
     sprite("player", {4,5}, 0.1), displayname(Game::getInstance()->getFallbackFont())
 {
-    if (holding_stuff == ItemType::Bow) holding = std::make_unique<Flintlock>();
+    if (holding_stuff == ItemType::Bow) holding = std::make_unique<Bow>();
     else holding = std::make_unique<Sword>();
     setPosition(spawn);
 
@@ -391,5 +391,11 @@ void RemotePlayer::update_derived(sf::Time dt) {
                 holding->update(dt, false, dir, this);
             } break;
         }
+    }
+}
+
+void RemotePlayer::shoot(sf::Vector2f const& dir) {
+    if (holding) {
+        holding->onLMB(dir ,this);
     }
 }

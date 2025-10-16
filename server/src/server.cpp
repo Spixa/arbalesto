@@ -206,6 +206,22 @@ void Server::recv() {
                     }
                 }
             } break;
+            case PacketType::Shoot: {
+                float x, y;
+                if (!(pkt >> x >> y)) break;
+                auto id_opt = findRemoteIdByEndpoint(addr, port);
+                uint32_t id;
+                if (!id_opt) break;
+                id = *id_opt;
+
+                sf::Packet shoot;
+                shoot << PacketHeader{seq, PacketType::Shoot} << id << x << y;
+
+                for (auto const& [pid, remote] : remotes) {
+                    if (pid == id) continue; // skip self
+                    auto discard = sock.send(shoot,  remote.addr, remote.port); // TODO: add actual shooting ill be back brb
+                }
+            } break;
             default: break;
         }
     }

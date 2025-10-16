@@ -713,8 +713,13 @@ void World::removeRemote(uint32_t id) {
     }
 }
 
-
-
+RemotePlayer* World::getRemote(uint32_t id) {
+    auto it = remote_players.find(id);
+    if (it != remote_players.end()) {
+        return remote_players.at(id);
+    }
+    return nullptr;
+}
 
 sf::Color World::getAmbientLight() const {
     float t = static_cast<float>(time % DAY_LENGTH) / DAY_LENGTH; // 0..1

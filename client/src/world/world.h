@@ -38,6 +38,7 @@ public:
     void addChunk(std::unique_ptr<Chunk> chunk);
     Chunk* getChunk(sf::Vector2i const& pos);
     void removeRemote(uint32_t id);
+    RemotePlayer* getRemote(uint32_t id);
     void setTime(uint64_t time);
 public:
     std::string const& getName() { return name; }
